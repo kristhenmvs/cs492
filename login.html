@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+	<title>Welcome to Our Bookstore</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+			background-color: #f0f0f0;
+			background-image: url('{{ url_for('static', filename='Bgbookstore.jfif') }}');
+			background-size: cover;
+			background-position: center;
+			
+        }
+		.header {
+            width: 100%;
+            background-color: #c78222;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 32px;
+			text-shadow: 4px 4px 8px #523d29;
+            position: absolute;
+            top: 0;
+			box-shadow: 2px 2px 5px #523d29;
+        }
+        .container {
+            text-align: center;
+			margin-top: 100px;
+        }
+		.container2 {
+			border: 5px solid orange;
+            padding: 20px;
+            margin: 20px;
+			background-color: #f0f0f0;
+			
+		}
+        .form-container {
+            display: none; /* Hide the register form by default */
+            background-color: #f0f0f0; 
+            padding: 20px; 
+            border: 5px solid orange;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+			
+		}
+		.form-group {
+            margin-bottom: 20px; /* Adjust the spacing as needed */
+        }
+		.form-container {
+            max-width: 400px; /* Adjust as needed */
+            margin: auto;
+        }
+        .form-group2 {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        .form-group2 label {
+            margin-bottom: 5px;
+        }
+        .form-group2 input, .form-group2 select {
+            padding: 8px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+	<div class="header">
+        Welcome to our Bookstore
+    </div>
+    <div class="container">
+        <table>
+            <tr id="reglogrow">
+                <td>
+					<div class="container2">
+                    <!-- Log in form -->
+                    <h2>Returning User Log in</h2>
+                    <div>
+                        <form action="/check_login" method="POST">
+							<div class="form-group">
+								<label for="username">Username:</label>
+								<input type="text" id="username" name="username" required>
+							</div>
+							<div class="form-group">	
+								<label for="password">Password:</label>
+								<input type="password" id="password" name="password" required>
+							</div>
+							<button type="submit">Login</button>
+							
+                        </form>
+                    </div>
+					</div>
+                </td>
+            </tr>
+            <tr id="reglogtable">
+        <td>
+            <!-- Register form -->
+            <button id="toggleRegisterForm">Register</button>
+            <div class="form-container" id="registerFormContainer">
+                <h2>Register</h2>
+                <form id="registerForm">
+                    <div class="form-group2">
+                        <label for="authLevel">I am </label>
+                        <select id="authLevel" name="authLevel" required>
+                            <option value="" disabled selected>Select an option</option>
+                            <option value="employee">an employee</option>
+                            <option value="supervisor">a supervisor</option>
+                            <option value="customer">a customer</option>
+                        </select>
+                    </div>
+                    <div class="form-group2">
+                        <label for="regusername">Username:</label>
+                        <input type="text" id="regusername" class="form-field" name="regusername" required>
+                    </div>
+                    <div class="form-group2">
+                        <label for="regemail">Email:</label>
+                        <input type="email" id="regemail" class="form-field" name="regemail" required>
+                    </div>
+                    <div class="form-group2">
+                        <label for="regpassword">Password:</label>
+                        <input type="password" id="regpassword" class="form-field" name="regpassword" required>
+                    </div>
+                    <div class="form-group2">
+                        <label for="regconpass">Confirm Password:</label>
+                        <input type="password" id="regconpass" class="form-field" name="regconpass" required>
+                    </div>
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+        </td>
+    </tr>
+        </table>
+    </div>
+    <script>
+        document.getElementById('toggleRegisterForm').addEventListener('click', function() {
+            var registerFormContainer = document.getElementById('registerFormContainer');
+            if (registerFormContainer.style.display === 'none' || registerFormContainer.style.display === '') {
+                registerFormContainer.style.display = 'block';
+            } else {
+                registerFormContainer.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

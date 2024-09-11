@@ -1,0 +1,70 @@
+#reglogtable {
+  margin-left: 300px;
+}
+
+#reglogrow {
+  padding: 100px;
+}
+
+table {
+  display: grid;
+  justify-content: center;
+}
+
+.headstyle {
+  background-color: rgb(122, 100, 74);
+  border: 2px solid orange;
+  height: 120px;
+  
+  margin-top: -23px;
+  margin-left: -10px;
+  margin-right: -10px;
+  width: auto;
+  text-align: center;
+}
+
+.form-container {
+  /*display: flex;*/
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-field {
+  width: 200px; /* Ajusta el ancho según sea necesario */
+  margin-bottom: 10px;
+  display: block;
+}
+
+body {
+  /*background: linear-gradient(to right, #f00, #ff0, #0ff);*/
+  /*animation: gradient 15s linear infinite;
+  animation-direction: alternate;*/
+}
+
+@keyframes gradient {
+  0% {
+    background-color: rgb(181, 139, 112);
+    left: 0px;
+    top: 0px;
+  }
+  25% {
+    background-color: rgb(251, 162, 83);
+    left: 200px;
+    top: 0px;
+  }
+  50% {
+    background-color: rgb(240, 204, 178);
+    left: 200px;
+    top: 200px;
+  }
+  75% {
+    background-color: rgb(249, 251, 138);
+    left: 0px;
+    top: 200px;
+  }
+  100% {
+    background-color: rgb(245, 177, 110);
+    left: 0px;
+    top: 0px;
+  }
+}
