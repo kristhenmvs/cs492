@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <style>
+		body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+			background-color: #f0f0f0;
+			background-image: url('{{ url_for('static', filename='upset.jfif') }}');
+			background-size: cover;
+			background-position: center;
+			
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 16vh;
+            text-align: center;
+			background-color: #f0f0f0;
+        }
+        .content {
+            border: 1px solid black;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <h1>Error</h1>
+            <p>{{ message }}</p>
+        </div>
+    </div>
+</body>
+</html>

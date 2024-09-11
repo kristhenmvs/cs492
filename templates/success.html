@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+			background-image: url('{{ url_for('static', filename='logingin.jfif') }}');	
+			background-size: cover;
+			background-position: center;
+        }
+        .container {
+            background-color: #f0f0f0; 
+            padding: 20px;
+            text-align: center;
+            box-shadow: 4px 4px 8px #523d29; 
+        }
+        .container p {
+            margin: 20px 0; 
+        }
+    </style>
+    <script>
+        // Redirect after 3 seconds
+        setTimeout(function(){
+            window.location.href = "/search";
+        }, 3000);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, {{ username }}!</h1>
+        <p>You have successfully logged in.</p>
+        <p>Redirecting to the book search page in 3 seconds...</p>
+    </div>
+</body>
+</html>
+
