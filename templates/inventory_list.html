@@ -1,0 +1,18 @@
+{% for book in books %}
+    <div class="inventory-item">
+        <div class="book-title">{{ book.Title }}</div>
+        <div class="book-details">
+            <p>ID: {{ book.ID }}</p>
+            <p>Author: {{ book.Author }}</p>
+        </div>
+        <div>
+            <label for="stockMin-{{ book.ID }}">Stock Min:</label>
+            <input type="number" id="stockMin-{{ book.ID }}" value="{{ book.StockMin }}">
+            <label for="stockMax-{{ book.ID }}">Stock Max:</label>
+            <input type="number" id="stockMax-{{ book.ID }}" value="{{ book.StockMax }}">
+            <label for="onHandQty-{{ book.ID }}">On Hand Qty:</label>
+            <input type="number" id="onHandQty-{{ book.ID }}" value="{{ book.OnHandQty }}">
+            <button onclick="saveInventory('{{ book.ID }}')">Save</button>
+        </div>
+    </div>
+{% endfor %}

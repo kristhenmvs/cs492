@@ -1,15 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Sep  9 22:34:42 2024
 
-@author: Jaime
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Sep  9 17:08:58 2024
+@author: Alandis, Elijah, Jessica, Kristhen, James
 
-@author: Jaime
 """
 
 from flask import Flask, request, render_template, redirect, session
@@ -21,7 +15,7 @@ import time
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = 'our_secret_code'
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
@@ -29,7 +23,47 @@ Session(app)
 def run_flask_app():
     app.run(debug=True, use_reloader=False)
     
+@app.route('/inventory')
+def inventory():
+    return render_template('inventory.html')
 
+@app.route('/all_inventory')
+def all_inventory():
+    conn = connect_db()
+    cursor = conn.cursor()
+    query = "SELECT * FROM BookInfo INNER JOIN BookInventory ON BookInfo.ID = BookInventory.BookInfoID"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    conn.close()
+    return render_template('inventory_list.html', books=rows)
+
+@app.route('/selected_inventory')
+def selected_inventory():
+    book_id = request.args.get('bookId')
+    conn = connect_db()
+    cursor = conn.cursor()
+    query = "SELECT * FROM BookInfo INNER JOIN BookInventory ON BookInfo.ID = BookInventory.BookInfoID WHERE BookInfo.ID = ? OR BookInfo.Title LIKE ?"
+    cursor.execute(query, (book_id, '%' + book_id + '%'))
+    rows = cursor.fetchall()
+    conn.close()
+    return render_template('inventory_list.html', books=rows)
+
+@app.route('/save_inventory', methods=['POST'])
+def save_inventory():
+    data = request.get_json()
+    book_id = data['bookId']
+    stock_min = data['stockMin']
+    stock_max = data['stockMax']
+    on_hand_qty = data['onHandQty']
+
+    conn = connect_db()
+    cursor = conn.cursor()
+    query = "UPDATE BookInventory SET StockMin = ?, StockMax = ?, OnHandQty = ? WHERE BookInfoID = ?"
+    cursor.execute(query, (stock_min, stock_max, on_hand_qty, book_id))
+    conn.commit()
+    conn.close()
+
+    return {'message': 'Inventory updated successfully'}
 # Function to connect to the SQLite database
 def connect_db():
     conn = sqlite3.connect('CTUTeamProject.db')
