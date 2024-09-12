@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Successful</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border: 2px solid orange;
+            box-shadow: 4px 4px 8px #523d29;
+            border-radius: 10px;
+        }
+        h1 {
+            color: green;
+        }
+        p {
+            font-size: 1.2em;
+        }
+        .button {
+            background-color: #6ca8d9;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Checkout Successful!</h1>
+        <p>Thank you for your purchase. Your order has been successfully processed.</p>
+        <a href="/home" class="button">Return to Home</a>
+    </div>
+</body>
+</html>
