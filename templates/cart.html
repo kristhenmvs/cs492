@@ -144,14 +144,35 @@
 
         function checkout() {
             const customerCode = document.getElementById('customerCode') ? document.getElementById('customerCode').value : null;
-            if (authLevel === 'Employee' || authLevel === 'Supervisor') {
-                if (!customerCode) {
-                    alert('Please enter a customer code.');
-                    return;
+            const data = {
+                cart: cart,
+                customerInfo: authLevel === 'Customer' ? username : customerCode
+            };
+
+            // Display the JSON data in a popup
+            alert('Sending the following data to the backend:\n' + JSON.stringify(data, null, 2));
+
+            fetch('/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Purchase complete!');
+                    localStorage.removeItem('cart');
+                    displayCart();
+                } else {
+                    alert('Error: ' + data.message);
                 }
-            }
-            alert('Proceeding to checkout...');
-            // Add your checkout logic here
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during checkout.');
+            });
         }
 
         // Display the cart items and customer info on page load
