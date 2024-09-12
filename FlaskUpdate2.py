@@ -229,3 +229,41 @@ if __name__ == '__main__':
     # Open the local webpage in Chrome
     webbrowser.get(chrome_path).open_new_tab('http://127.0.0.1:5000/login')
 
+Class Book:
+    Def __init__(self, title, author, price, quantity):
+        Self.title = title
+        Self.author = author
+        Self.price = price
+        Self.quantity = quantity
+
+Class BookStore:
+    Def __init__(self):
+        Self.books = []
+
+    Def add_book(self, book):
+        Self.books.append(book)
+
+    Def generate_detailed_report(self):
+        Print(“Detailed Inventory Report”)
+        Print(“========================”)
+        For book in self.books:
+            Print(f”Title: {book.title}, Author: {book.author}, Price: ${book.price:.2f}, Quantity: {book.quantity}”)
+        Total_books = sum(book.quantity for book in self.books)
+        Total_value = sum(book.price * book.quantity for book in self.books)
+        Print(“\nSummary”)
+        Print(“=======”)
+        Print(f”Total number of books: {total_books}”)
+        Print(f”Total value of inventory: ${total_value:.2f}”)
+
+# Create a bookstore instance
+Store = BookStore()
+
+# Add some books to the store
+Store.add_book(Book(“Book A”, “Author A”, 10.99, 5))
+Store.add_book(Book(“Book B”, “Author B”, 12.50, 3))
+Store.add_book(Book(“Book C”, “Author C”, 8.75, 7))
+
+# Generate the detailed report
+Store.generate_detailed_report
+
+
