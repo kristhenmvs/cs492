@@ -198,6 +198,7 @@ def checkout():
         data = request.get_json()
         cart = data['cart']
         customer_info = data['customerInfo'] or 10000  # Default if customer doesn't have an acct.
+        logging.debug(customer_info)
         auth_level = session.get('auth_level')
         user_nm = session.get('username')
         today = datetime.today().strftime('%Y-%m-%d')  # Get today's date
@@ -223,6 +224,7 @@ def checkout():
                 conn.close()
                 return jsonify({'message': f'Book with ID {book_id} not found!'}), 404
 
+            logging.warning(f"book Data: {dict(book)}")
             if auth_level in ['Employee', 'Supervisor']:
                 customer_code = customer_info
                 cursor.execute("SELECT * FROM CustomerInfo WHERE ID = ?", (customer_code,))
@@ -237,8 +239,16 @@ def checkout():
                 """
                 cursor.execute(insert_query, (user_id, customer['id'], today, book['SalePrice'], book['ID']))
             else:
-                cursor.execute("SELECT * FROM CustomerInfo WHERE username = ?", (customer_info,))
+                cursor.execute("""
+                    SELECT CustomerInfo.id 
+                    FROM CustomerInfo 
+                    INNER JOIN LogInfo ON LogInfo.UserEmail = CustomerInfo.Email_Add 
+                    WHERE LogInfo.UserNm = ?
+                """, (customer_info,))
                 customer = cursor.fetchone()
+                logging.warning(customer[0])
+                logging.warning(book['SalePrice'])
+                logging.warning(book['ID'])
                 if not customer:
                     conn.close()
                     return jsonify({'message': f'Customer with username {customer_info} not found!'}), 404
@@ -247,7 +257,7 @@ def checkout():
                     INSERT INTO SalesRecords (SoldBy, SoldTo, SalesDate, SalesPrice, BookSold)
                     VALUES (?, ?, ?, ?, ?)
                 """
-                cursor.execute(insert_query, (user_id, customer['id'], today, book['price'], book['ID']))
+                cursor.execute(insert_query, (customer[0], customer[0], today, book['SalePrice'], book['ID']))
 
             # Reduce OnHandQty by 1 in the BookInventory table
             update_query = "UPDATE BookInventory SET OnHandQty = OnHandQty - 1 WHERE BookInfoID = ?"

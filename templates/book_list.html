@@ -9,6 +9,9 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            background-image: url('{{ url_for('static', filename='booklist.jfif') }}');
+            background-size: cover;
+            background-position: center;
         }
         table {
             border-collapse: collapse;
@@ -29,6 +32,10 @@
             color: white;
             border: none;
             cursor: pointer;
+        }
+        .disabled-button {
+            background-color: grey;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -54,10 +61,15 @@
             <td>{{ book['AisleLoc'] }} {{ book['ShelfLoc'] }}</td>
             <td>{{ book['OnHandQty'] }}</td>
             <td>{{ book.SalePrice | currency }}</td>
-            <td><button class="sell-button" data-bookid="{{ book.id }}">{{ 'Purchase' if auth_level == 'Customer' else 'Sell' }}</button></td>
+            <td>
+                {% if book['OnHandQty'] > 0 %}
+                <button class="sell-button" data-bookid="{{ book.id }}">
+                    {{ 'Purchase' if auth_level == 'Customer' else 'Sell' }}
+                </button>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>
-	
 </body>
 </html>
