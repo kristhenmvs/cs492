@@ -255,7 +255,7 @@ def checkout():
 
         conn.commit()
         conn.close()
-        return render_template('checkout_success.html')
+        return redirect('/checkout_success')
     except Exception as e:
         logging.warning(f"Error during checkout: {e}")
         return jsonify({'message': 'An error occurred during checkout.'}), 500
@@ -263,6 +263,10 @@ def checkout():
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/checkout_success')
+def checkout_success():
+    return render_template('checkout_success.html')
 
 
 if __name__ == '__main__':

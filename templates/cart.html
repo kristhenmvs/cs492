@@ -105,79 +105,82 @@
     </div>
 
     <script>
-        const cart = JSON.parse(localStorage.getItem('cart')) || [];
-        const authLevel = "{{ auth_level }}";  // Pass the auth_level from Flask
-        const username = "{{ username }}";  // Pass the username from Flask
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const authLevel = "{{ auth_level }}";  // Pass the auth_level from Flask
+    const username = "{{ username }}";  // Pass the username from Flask
 
-        function displayCart() {
-            const cartItems = document.getElementById('cartItems');
-            cartItems.innerHTML = '';
-            cart.forEach((book, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${book.id}</td>
-                    <td>${book.title}</td>
-                    <td>${book.price}</td>
-                    <td><button class="remove-button" onclick="removeFromCart(${index})">Remove</button></td>
-                `;
-                cartItems.appendChild(row);
-            });
+    function displayCart() {
+        const cartItems = document.getElementById('cartItems');
+        cartItems.innerHTML = '';
+        cart.forEach((book, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${book.id}</td>
+                <td>${book.title}</td>
+                <td>${book.price}</td>
+                <td><button class="remove-button" onclick="removeFromCart(${index})">Remove</button></td>
+            `;
+            cartItems.appendChild(row);
+        });
+    }
+
+    function displayCustomerInfo() {
+        const customerInfo = document.getElementById('customerInfo');
+        if (authLevel === 'Customer') {
+            customerInfo.innerHTML = `<p>Customer: ${username}</p>`;
+        } else if (authLevel === 'Employee' || authLevel === 'Supervisor') {
+            customerInfo.innerHTML = `
+                <label for="customerCode">Customer Code:</label>
+                <input type="text" id="customerCode" name="customerCode">
+            `;
         }
+    }
 
-        function displayCustomerInfo() {
-            const customerInfo = document.getElementById('customerInfo');
-            if (authLevel === 'Customer') {
-                customerInfo.innerHTML = `<p>Customer: ${username}</p>`;
-            } else if (authLevel === 'Employee' || authLevel === 'Supervisor') {
-                customerInfo.innerHTML = `
-                    <label for="customerCode">Customer Code:</label>
-                    <input type="text" id="customerCode" name="customerCode">
-                `;
-            }
-        }
-
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            displayCart();
-        }
-
-        function checkout() {
-            const customerCode = document.getElementById('customerCode') ? document.getElementById('customerCode').value : null;
-            const data = {
-                cart: cart,
-                customerInfo: authLevel === 'Customer' ? username : customerCode
-            };
-
-            // Display the JSON data in a popup
-            alert('Sending the following data to the backend:\n' + JSON.stringify(data, null, 2));
-
-            fetch('/checkout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Purchase complete!');
-                    localStorage.removeItem('cart');
-                    displayCart();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred during checkout.');
-            });
-        }
-
-        // Display the cart items and customer info on page load
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        localStorage.setItem('cart', JSON.stringify(cart));
         displayCart();
-        displayCustomerInfo();
-    </script>
+    }
+
+    function checkout() {
+        const customerCode = document.getElementById('customerCode') ? document.getElementById('customerCode').value : null;
+        const data = {
+            cart: cart,
+            customerInfo: authLevel === 'Customer' ? username : customerCode
+        };
+
+        fetch('/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.message === 'Checkout successful!') {
+                localStorage.removeItem('cart');
+                window.location.href = '/checkout_success';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Display the cart items and customer info on page load
+    displayCart();
+    displayCustomerInfo();
+</script>
+
 </body>
 </html>
