@@ -148,22 +148,23 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    bookId: bookId,
-                    stockMin: stockMin,
-                    stockMax: stockMax,
-                    onHandQty: onHandQty
-                })
+            },
+            body: JSON.stringify({
+                bookId: bookId,
+                stockMin: stockMin,
+                stockMax: stockMax,
+                onHandQty: onHandQty
             })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-            })
-            .catch(error => {
-                alert(`Error: ${error.message}`);
-            });
-        }
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);  // This should display "Inventories updated successfully"
+            console.log(data.updated_info);  // Log the updated info to the console for verification
+        })
+        .catch(error => {
+            alert(`Error: ${error.message}`);
+        });
+    }
     </script>
 </body>
 </html>

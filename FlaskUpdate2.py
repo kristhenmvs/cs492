@@ -78,10 +78,8 @@ def save_inventory():
         prior_on_hand_qty = current_values['OnHandQty']
 
         # Insert a new record into InventoryAdjustments
-        insert_query = """
-        INSERT INTO InventoryAdjustments (BookInfoID, PriorMin, PriorMax, PriorOh, NewMin, NewMax, User)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """
+        insert_query = "INSERT INTO InventoryAdjustments (BookInfoID, PriorMin, PriorMax, PriorOh, NewMin, NewMax, User) VALUES (?, ?, ?, ?, ?, ?, ?)"
+
         cursor.execute(insert_query, (book_id, prior_stock_min, prior_stock_max, prior_on_hand_qty, new_stock_min, new_stock_max, username))
 
         # Update the BookInventory table
@@ -184,7 +182,7 @@ def check_login():
     if user:
         session['username'] = username
         session['auth_level'] = user[4]
-        logging.debug(f"Username: {user[0]}, Auth Level: {user[4]}")
+        logging.warning(f"Username: {user[0]}, Auth Level: {user[4]}")
         return render_template('success.html')
     else:
         return render_template('error.html', message="Invalid username or password")
