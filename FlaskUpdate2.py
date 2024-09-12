@@ -202,6 +202,14 @@ def search():
 def login_form():
     return render_template('login.html')
 
+@app.route('/cart')
+def cart():
+    if 'username' in session and 'auth_level' in session:
+        username = session['username']
+        auth_level = session['auth_level']
+        return render_template('cart.html', username=username, auth_level=auth_level)
+    else:
+        return redirect('/login')
 
 @app.route('/')
 def home():

@@ -99,8 +99,8 @@
     <div class="banner" id="banner">
         <div class="nav-links">
             <a href="/login">Login/Logout</a>
-            <a href="/book-search">Book Search</a>
-            <a href="/cart">Cart</a>
+            <a href="/search">Book Search</a>
+            <a href="/cart" id="cartButton">Cart</a>
             <a href="/inventory" id="inventoryLink">Inventory</a>
             <a href="/reports" id="reportsLink">Reports</a>
         </div>
@@ -125,6 +125,7 @@
 
     <script>
         const authLevel = "{{ auth_level }}";  // Pass the auth_level from Flask
+        const cart = [];  // Array to store cart items
 
         // Function to toggle the banner visibility
         function toggleBanner() {
@@ -153,13 +154,31 @@
             const buttons = document.querySelectorAll('.sell-button');
             buttons.forEach(button => {
                 button.addEventListener('click', function() {
-                    if (authLevel === 'Supervisor' || authLevel === 'Employee') {
-                        window.location.href = '/sales';
-                    } else {
-                        alert('You do not have permission to view this page.');
-                    }
+                    const bookId = this.dataset.bookid;  // Assuming each button has a data-bookid attribute
+                    addToCart(bookId);
                 });
             });
+        }
+
+        // Function to add a book to the cart
+        function addToCart(bookId) {
+            const book = {
+            id: bookId,
+            title: document.querySelector(`[data-bookid="${bookId}"]`).closest('tr').querySelector('td:nth-child(1)').innerText,
+            price: document.querySelector(`[data-bookid="${bookId}"]`).closest('tr').querySelector('td:nth-child(7)').innerText
+        };
+        cart.push(book);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert('Book added to cart!');
+        }
+
+        // Function to display the cart contents
+        function displayCart() {
+            let cartContents = 'Cart:\n';
+            cart.forEach(bookId => {
+                cartContents += `Book ID: ${bookId}\n`;
+            });
+
         }
 
         // JavaScript for making a GET request
@@ -195,6 +214,8 @@
                     document.getElementById('results').innerHTML = `<p>Error: ${error.message}</p>`;
                 });
         });
+        // Event listener for the Cart button
+        document.getElementById('cartButton').addEventListener('click', displayCart);
     </script>
 </body>
 </html>
