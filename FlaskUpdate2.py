@@ -183,7 +183,7 @@ def check_login():
         session['username'] = username
         session['auth_level'] = user[4]
         logging.warning(f"Username: {user[0]}, Auth Level: {user[4]}")
-        return render_template('success.html')
+        return render_template('success.html', username=username)
     else:
         return render_template('error.html', message="Invalid username or password")
 
