@@ -327,7 +327,7 @@ def generate_report():
 
     if report_type == 'item':
         query = """
-            SELECT BookInfo.BookTitle, SUM(SalesRecords.QuantitySold) AS TotalSales
+            SELECT BookInfo.Title, SUM(SalesRecords.QuantitySold) AS TotalSales
             FROM SalesRecords
             JOIN BookInfo ON SalesRecords.BookID = BookInfo.BookID
             GROUP BY BookInfo.BookTitle
@@ -335,11 +335,10 @@ def generate_report():
         """
     elif report_type == 'customer':
         query = """
-            SELECT CustomerInfo.FullName, SUM(SalesRecords.QuantitySold) AS TotalPurchases
-            FROM SalesRecords
-            JOIN CustomerInfo ON SalesRecords.CustomerID = CustomerInfo.CustomerID
-            GROUP BY CustomerInfo.FullName
-            ORDER BY TotalPurchases DESC;
+            SELECT CI.First_Name, CI.Last_Name, COUNT(SR.SoldTo) AS TotalSalesRecords
+            FROM CustomerInfo CI
+            JOIN SalesRecords SR ON CI.ID = SR.SoldTo
+            GROUP BY CI.First_Name, CI.Last_Name;
         """
     else:
         return jsonify({"success": False, "message": "Invalid report type"})
