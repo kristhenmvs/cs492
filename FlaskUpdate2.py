@@ -303,6 +303,52 @@ def save_registration():
 
     return {'message': 'Registration successful.'}
 
+@app.route('/reports')
+def reports():
+    return render_template('reports.html')
+
+# Path to the database
+DB_PATH = 'CTUTeamProject.db'
+
+# Function to query the database
+def query_database(query, params=()):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    columns = [description[0] for description in cursor.description]
+    conn.close()
+    return rows, columns
+
+# Generate report based on sales item or customer
+@app.route('/generate_report', methods=['GET'])
+def generate_report():
+    report_type = request.args.get('type', None)
+
+    if report_type == 'item':
+        query = """
+            SELECT BookInfo.BookTitle, SUM(SalesRecords.QuantitySold) AS TotalSales
+            FROM SalesRecords
+            JOIN BookInfo ON SalesRecords.BookID = BookInfo.BookID
+            GROUP BY BookInfo.BookTitle
+            ORDER BY TotalSales DESC;
+        """
+    elif report_type == 'customer':
+        query = """
+            SELECT CustomerInfo.FullName, SUM(SalesRecords.QuantitySold) AS TotalPurchases
+            FROM SalesRecords
+            JOIN CustomerInfo ON SalesRecords.CustomerID = CustomerInfo.CustomerID
+            GROUP BY CustomerInfo.FullName
+            ORDER BY TotalPurchases DESC;
+        """
+    else:
+        return jsonify({"success": False, "message": "Invalid report type"})
+
+    rows, columns = query_database(query)
+    if rows:
+        return jsonify({"success": True, "rows": rows, "columns": columns})
+    else:
+        return jsonify({"success": False, "message": "No data found"})
 
 if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask_app)

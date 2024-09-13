@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Search</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+        background-image: url("{{url_for("static", filename="reports.jfif")}}");
+        background-size: cover;
+        background-position: center;
+      }
+
+      .header {
+        width: 100%;
+        background-color: #c78222;
+        color: white;
+        text-align: center;
+        padding: 20px 0;
+        font-size: 32px;
+        text-shadow: 4px 4px 8px #523d29;
+        position: absolute;
+        top: 0;
+        box-shadow: 2px 2px 5px #523d29;
+      }
+      .exit-button {
+        background-color: #d9534f;
+        padding: 5px 10px;
+        font-size: 14px;
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+      }
+      .exit-button:hover {
+        background-color: #c9302c;
+      }
+      .banner {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background-color: orange; /* Solid orange background */
+        color: white;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+        transition: transform 0.3s ease; /* Smooth transition */
+      }
+      .banner.hidden {
+        transform: translateY(-100%); /* Move the banner out of view */
+      }
+      .nav-links {
+        display: flex;
+        gap: 20px;
+        padding-right: 20px;
+        margin-left: auto;
+      }
+      .nav-links a {
+        color: black;
+        text-decoration: none;
+      }
+      .nav-links a:hover {
+        text-decoration: underline;
+      }
+
+      .toggle-button {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        cursor: pointer;
+        z-index: 1001; /* Ensure it stays above the banner */
+      }
+
+      .reportType {
+        width: 200px;
+        padding: 10px;
+        margin-right: 10px;
+      }
+
+      .report-container {
+        background-color: #f0f0f0;
+        padding: 20px;
+        border: 2px solid orange;
+        box-shadow: 4px 4px 8px #523d29;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+
+      button {
+        border: none;
+        background-color: #6ca8d9;
+        color: white;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      #reportOutput {
+        margin-top: 20px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toggle-button" onclick="toggleBanner()">☰</div>
+    <div class="banner" id="banner">
+      <div class="nav-links">
+        <a href="/login">Login/Logout</a>
+        <a href="/book-search">Book Search</a>
+        <a href="/cart">Cart</a>
+        <a href="/inventory" id="inventoryLink">Inventory</a>
+        <a href="/reports" id="reportsLink">Reports</a>
+      </div>
+    </div>
+
+    <div class="report-container">
+      <div id="selreptype">
+        <h2>Select Sales Report Type</h2>
+        <label for="reportType">Choose a report:</label>
+        <select id="reportType" name="reportType">
+          <option value="" disabled selected>Select a report type</option>
+          <option value="item">Sales by Item</option>
+          <option value="customer">Sales by Customer</option>
+        </select>
+        <button type="button" id="genReport" onclick="generateReport()">
+          Generate Report
+        </button>
+      </div>
+
+      <div id="reportOutput">
+        <h2>Report</h2>
+        <div id="dispRepo"><!-- Sales report will be displayed here --></div>
+        <button type="button" id="otherRep">Generate Another Report</button>
+      </div>
+    </div>
+
+    <script>
+      const authLevel = "{{ auth_level }}"; // Pass the auth_level from Flask
+
+      // Function to toggle the banner visibility
+      function toggleBanner() {
+        const banner = document.getElementById("banner");
+        banner.classList.toggle("hidden");
+      }
+
+      // Function to set visibility of navigation links based on auth level
+      function setNavLinksVisibility() {
+        const inventoryLink = document.getElementById("inventoryLink");
+        const reportsLink = document.getElementById("reportsLink");
+
+        if (authLevel !== "Supervisor" && authLevel !== "Employee") {
+          inventoryLink.style.display = "none";
+        }
+        if (authLevel !== "Supervisor") {
+          reportsLink.style.display = "none";
+        }
+      }
+
+      // Call the function to set visibility on page load
+      setNavLinksVisibility();
+
+      // Generate report
+      function generateReport() {
+        const reportType = document.getElementById("reportType").value;
+
+        if (reportType) {
+          fetch(`/generate_report?type=${encodeURIComponent(reportType)}`)
+            .then((response) => response.json())
+            .then((data) => {
+              displayReport(data);
+            })
+            .catch((error) => {
+              document.getElementById(
+                "reportOutput"
+              ).innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        } else {
+          alert("Please select a report type");
+        }
+      }
+
+      function displayReport(data) {
+        const dispRepo = document.getElementById("dispRepo");
+        dispRepo.innerHTML = ""; // Clear previous report
+
+        if (data.success) {
+          // Create table to display report data
+          const table = document.createElement("table");
+          table.border = "1";
+
+          // Create table header
+          const thead = document.createElement("thead");
+          const headerRow = document.createElement("tr");
+
+          data.columns.forEach((col) => {
+            const th = document.createElement("th");
+            th.innerText = col;
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          // Create table body with report data
+          const tbody = document.createElement("tbody");
+          data.rows.forEach((row) => {
+            const tr = document.createElement("tr");
+            row.forEach((cell) => {
+              const td = document.createElement("td");
+              td.innerText = cell;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+
+          // Append table to the output div
+          dispRepo.appendChild(table);
+        } else {
+          dispRepo.innerHTML = "No data available for the selected report.";
+        }
+      }
+
+      document
+        .getElementById("genReport")
+        .addEventListener("click", function () {
+          var reportOutput = document.getElementById("reportOutput");
+          const reportType = document.getElementById("reportType").value;
+
+          if (reportType) {
+            if (
+              reportOutput.style.display === "none" ||
+              reportOutput.style.display === ""
+            ) {
+              reportOutput.style.display = "block";
+              selreptype.style.display = "none";
+            } else {
+              reportOutput.style.display = "none";
+              selreptype.style.display = "block";
+            }
+          }
+        });
+
+      document
+        .getElementById("otherRep")
+        .addEventListener("click", function () {
+          var selreptype = document.getElementById("selreptype");
+
+          reportOutput.style.display = "none";
+          selreptype.style.display = "block";
+        });
+    </script>
+  </body>
+</html>
