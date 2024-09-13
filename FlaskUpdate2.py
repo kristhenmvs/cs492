@@ -13,6 +13,7 @@ import webbrowser
 import threading
 import time
 import logging
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,6 +27,12 @@ Session(app)
 def run_flask_app():
     app.run(debug=True, use_reloader=False)
 
+# Function to connect to the SQLite database
+def connect_db():
+    logging.debug("Connecting to the Database")
+    conn = sqlite3.connect('CTUTeamProject.db')
+    conn.row_factory = sqlite3.Row  # This allows us to return rows as dictionaries
+    return conn
 
 @app.route('/inventory')
 def inventory():
@@ -94,12 +101,7 @@ def save_inventory():
         return {'message': 'Book not found'}
 
 
-# Function to connect to the SQLite database
-def connect_db():
-    logging.debug("Connecting to the Database")
-    conn = sqlite3.connect('CTUTeamProject.db')
-    conn.row_factory = sqlite3.Row  # This allows us to return rows as dictionaries
-    return conn
+
 
 
 # Route to look up a book by title, author, or ID
@@ -133,29 +135,6 @@ def lookup_book():
         return render_template('book_list.html', books=rows, auth_level=auth_level)
     else:
         return render_template('error.html', message="No books found")
-
-
-@app.route('/sales')
-def sales():
-    if 'username' in session and 'auth_level' in session:
-        auth_level = session['auth_level']
-        if auth_level in ['Supervisor', 'Employee']:
-            # Example book data, replace with actual data from your database
-            book = {
-                'Title': 'Example Book Title',
-                'Author': 'Example Author',
-                'ReleaseDate': '2024-01-01',
-                'ID': '12345',
-                'AisleLoc': 'A1',
-                'ShelfLoc': 'S1',
-                'OnHandQty': 10,
-                'SalePrice': 19.99
-            }
-            return render_template('sales.html', book=book)
-        else:
-            return render_template('error.html', message="You do not have permission to view this page.")
-    else:
-        return redirect('/login')
 
 
 @app.template_filter('currency')
@@ -202,11 +181,127 @@ def search():
 def login_form():
     return render_template('login.html')
 
+@app.route('/cart')
+def cart():
+    if 'username' in session and 'auth_level' in session:
+        username = session['username']
+        auth_level = session['auth_level']
+        return render_template('cart.html', username=username, auth_level=auth_level)
+    else:
+        return redirect('/login')
+
+from datetime import datetime
+
+@app.route('/checkout', methods=['POST'])
+def checkout():
+    try:
+        data = request.get_json()
+        cart = data['cart']
+        customer_info = data['customerInfo'] or 10000  # Default if customer doesn't have an acct.
+        logging.debug(customer_info)
+        auth_level = session.get('auth_level')
+        user_nm = session.get('username')
+        today = datetime.today().strftime('%Y-%m-%d')  # Get today's date
+
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        # Fetch the user ID from the LogInfo table
+        logging.warning(user_nm)
+        cursor.execute("SELECT UserID FROM LogInfo WHERE UserNm = ?", (user_nm,))
+        user = cursor.fetchone()
+        if not user:
+            conn.close()
+            return jsonify({'message': f'User with username {user_nm} not found!'}), 404
+        user_id = user['UserID']
+
+        for item in cart:
+            book_id = item['id']
+            cursor.execute("SELECT * FROM BookInfo WHERE ID = ?", (book_id,))
+            book = cursor.fetchone()
+
+            if not book:
+                conn.close()
+                return jsonify({'message': f'Book with ID {book_id} not found!'}), 404
+
+            logging.warning(f"book Data: {dict(book)}")
+            if auth_level in ['Employee', 'Supervisor']:
+                customer_code = customer_info
+                cursor.execute("SELECT * FROM CustomerInfo WHERE ID = ?", (customer_code,))
+                customer = cursor.fetchone()
+                if not customer:
+                    conn.close()
+                    return jsonify({'message': f'Customer with code {customer_code} not found!'}), 404
+
+                insert_query = """
+                    INSERT INTO SalesRecords (SoldBy, SoldTo, SalesDate, SalesPrice, BookSold)
+                    VALUES (?, ?, ?, ?, ?)
+                """
+                cursor.execute(insert_query, (user_id, customer['id'], today, book['SalePrice'], book['ID']))
+            else:
+                cursor.execute("""
+                    SELECT CustomerInfo.id 
+                    FROM CustomerInfo 
+                    INNER JOIN LogInfo ON LogInfo.UserEmail = CustomerInfo.Email_Add 
+                    WHERE LogInfo.UserNm = ?
+                """, (customer_info,))
+                customer = cursor.fetchone()
+                logging.warning(customer[0])
+                logging.warning(book['SalePrice'])
+                logging.warning(book['ID'])
+                if not customer:
+                    conn.close()
+                    return jsonify({'message': f'Customer with username {customer_info} not found!'}), 404
+
+                insert_query = """
+                    INSERT INTO SalesRecords (SoldBy, SoldTo, SalesDate, SalesPrice, BookSold)
+                    VALUES (?, ?, ?, ?, ?)
+                """
+                cursor.execute(insert_query, (customer[0], customer[0], today, book['SalePrice'], book['ID']))
+
+            # Reduce OnHandQty by 1 in the BookInventory table
+            update_query = "UPDATE BookInventory SET OnHandQty = OnHandQty - 1 WHERE BookInfoID = ?"
+            cursor.execute(update_query, (book_id,))
+
+        conn.commit()
+        conn.close()
+        return redirect('/checkout_success')
+    except Exception as e:
+        logging.warning(f"Error during checkout: {e}")
+        return jsonify({'message': 'An error occurred during checkout.'}), 500
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
+@app.route('/checkout_success')
+def checkout_success():
+    return render_template('checkout_success.html')
+
+@app.route('/save_registration', methods=['POST'])
+def save_registration():
+    data = request.get_json()
+    userName = data['UserNm']
+    userPassword = data['PsWrd']
+    userEmail = data['UserEmail']
+    userAuth = data['AuthLevel']
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Fetch the current max UserID
+    cursor.execute("SELECT COALESCE(MAX(UserID), 0) FROM LogInfo")
+    currentID = cursor.fetchone()[0]
+    newUserID = currentID + 1
+    
+    # Insert a new record into LogInfo
+    insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserID, UserEmail, AuthLevel) VALUES (?, ?, ?, ?, ?)"
+    
+    cursor.execute(insert_query, (userName, userPassword, newUserID, userEmail, userAuth))
+    conn.commit()
+    conn.close()
+
+    return {'message': 'Registration successful.'}
 
 
 if __name__ == '__main__':
@@ -221,4 +316,8 @@ if __name__ == '__main__':
 
     # Open the local webpage in Chrome
     webbrowser.get(chrome_path).open_new_tab('http://127.0.0.1:5000/login')
+
+
+
+
 

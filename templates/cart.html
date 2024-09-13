@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            background-color: #f0f0f0;
+            background-image: url('{{ url_for('static', filename='checkout.jfif') }}');
+            background-size: cover;
+            background-position: center;
+        }
+        .banner {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: orange;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            padding-right: 20px;
+            margin-left: auto;
+        }
+        .nav-links a {
+            color: black;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .cart-container {
+            margin-top: 60px; /* Adjust to avoid overlap with the banner */
+            padding: 20px;
+            background-color: white;
+            border: 2px solid orange;
+            box-shadow: 4px 4px 8px #523d29;
+            width: 80%;
+            max-width: 800px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .checkout-button, .remove-button {
+            background-color: #6ca8d9;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .checkout-button:hover, .remove-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <div class="nav-links">
+            <a href="/login">Login/Logout</a>
+            <a href="/search">Book Search</a>
+            <a href="/cart">Cart</a>
+            {% if auth_level != 'Customer' %}
+                <a href="/inventory" id="inventoryLink">Inventory</a>
+                <a href="/reports" id="reportsLink">Reports</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="cart-container">
+        <h1>Your Cart</h1>
+        <div id="customerInfo">
+            <!-- Customer info will be dynamically inserted here -->
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Book ID</th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="cartItems">
+                <!-- Cart items will be dynamically inserted here -->
+            </tbody>
+        </table>
+        <button class="checkout-button" onclick="checkout()">Checkout</button>
+    </div>
+
+    <script>
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const authLevel = "{{ auth_level }}";  // Pass the auth_level from Flask
+    const username = "{{ username }}";  // Pass the username from Flask
+
+    function displayCart() {
+        const cartItems = document.getElementById('cartItems');
+        cartItems.innerHTML = '';
+        cart.forEach((book, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${book.id}</td>
+                <td>${book.title}</td>
+                <td>${book.price}</td>
+                <td><button class="remove-button" onclick="removeFromCart(${index})">Remove</button></td>
+            `;
+            cartItems.appendChild(row);
+        });
+    }
+
+    function displayCustomerInfo() {
+        const customerInfo = document.getElementById('customerInfo');
+        if (authLevel === 'Customer') {
+            customerInfo.innerHTML = `<p>Customer: ${username}</p>`;
+        } else if (authLevel === 'Employee' || authLevel === 'Supervisor') {
+            customerInfo.innerHTML = `
+                <label for="customerCode">Customer Code:</label>
+                <input type="text" id="customerCode" name="customerCode">
+            `;
+        }
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        displayCart();
+    }
+
+    function checkout() {
+        const customerCode = document.getElementById('customerCode') ? document.getElementById('customerCode').value : null;
+        const data = {
+            cart: cart,
+            customerInfo: authLevel === 'Customer' ? username : customerCode
+        };
+
+        fetch('/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.message === 'Checkout successful!') {
+                localStorage.removeItem('cart');
+                window.location.href = '/checkout_success';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Display the cart items and customer info on page load
+    displayCart();
+    displayCustomerInfo();
+</script>
+
+</body>
+</html>
