@@ -327,11 +327,12 @@ def generate_report():
 
     if report_type == 'item':
         query = """
-            SELECT BookInfo.Title, SUM(SalesRecords.QuantitySold) AS TotalSales
-            FROM SalesRecords
-            JOIN BookInfo ON SalesRecords.BookID = BookInfo.BookID
-            GROUP BY BookInfo.BookTitle
-            ORDER BY TotalSales DESC;
+            SELECT sr.BookSold AS BookID, bi.Title, bi.SalePrice, bi2.StockMin, bi2.StockMax, COUNT(sr.BookSold) AS TotalSold
+            FROM SalesRecords sr
+            JOIN BookInfo bi ON sr.BookSold = bi.ID
+            JOIN BookInventory bi2 ON bi.ID = bi2.BookInfoID
+            GROUP BY sr.BookSold, bi.Title, bi.SalePrice, bi2.StockMin, bi2.StockMax
+            ORDER BY sr.BookSold;
         """
     elif report_type == 'customer':
         query = """
