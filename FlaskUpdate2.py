@@ -6,7 +6,7 @@
 
 """
 
-from flask import Flask, request, render_template, redirect, session
+from flask import Flask, request, render_template, redirect, session, jsonify
 import sqlite3
 from flask_session import Session
 import webbrowser
@@ -206,6 +206,7 @@ def login_form():
 @app.route('/')
 def home():
     return render_template('index.html')
+
 
 
 if __name__ == '__main__':
