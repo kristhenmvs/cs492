@@ -285,6 +285,12 @@ def save_registration():
     userPassword = data['PsWrd']
     userEmail = data['UserEmail']
     userAuth = data['AuthLevel']
+    userPh = data['PhoneNumber']
+    useraddr = data['Address']
+    usercity = data['City']
+    userfirst = data['FirstName']
+    userlast = data['LastName']
+    today = datetime.today().strftime('%Y-%m-%d')  # Get today's date
 
     conn = connect_db()
     cursor = conn.cursor()
@@ -292,20 +298,37 @@ def save_registration():
     # Fetch the current max UserID
     cursor.execute("SELECT COALESCE(MAX(UserID), 0) FROM LogInfo")
     currentID = cursor.fetchone()[0]
-    newUserID = currentID + 1
-    
-    # Insert a new record into LogInfo
-    insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserID, UserEmail, AuthLevel) VALUES (?, ?, ?, ?, ?)"
-    
-    cursor.execute(insert_query, (userName, userPassword, newUserID, userEmail, userAuth))
+    # newUserID = currentID + 1
+    if userAuth in ('Supervisor' , 'Employee'):
+        # Instert a Sup/Emp Entry
+        insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
+        cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
+    else:
+        # Insert Customer entry into LogInfo
+        insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
+        cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
+        conn.commit()
+
+        # Insert Customer entry into CustomerInfo
+        insert_customer_query = """
+                INSERT INTO CustomerInfo (Email_Add, First_Name, Last_Name, Start_date, Ph_num, Phy_Add, Phy_Add_City)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """
+        cursor.execute(insert_customer_query, (userEmail, userfirst, userlast, today, userPh, useraddr, usercity))
+
     conn.commit()
     conn.close()
 
-    return {'message': 'Registration successful.'}
+    # return {'message': 'Registration successful.'}
+    session['username'] = userName
+    session['auth_level'] = userAuth
+
+    return jsonify({'message': 'Registration successful.', 'updated_info': {'username': userName, 'auth_level': userAuth}})
 
 @app.route('/reports')
 def reports():
-    return render_template('reports.html')
+    auth_level = session.get('auth_level')
+    return render_template('reports.html', auth_level=auth_level)
 
 # Path to the database
 DB_PATH = 'CTUTeamProject.db'
@@ -324,6 +347,7 @@ def query_database(query, params=()):
 @app.route('/generate_report', methods=['GET'])
 def generate_report():
     report_type = request.args.get('type', None)
+
 
     if report_type == 'item':
         query = """
