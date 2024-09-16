@@ -13,6 +13,9 @@ import webbrowser
 import threading
 import time
 import logging
+import string
+import os
+import random
 from datetime import datetime
 
 # Configure logging
@@ -330,8 +333,69 @@ def reports():
     auth_level = session.get('auth_level')
     return render_template('reports.html', auth_level=auth_level)
 
+# Inventory Stock Ordering
+@app.route('/stock_order_report')
+def stock_order_reports():
+    auth_level = session.get('auth_level')
+    return render_template('stock_order_report.html', auth_level=auth_level)
 # Path to the database
 DB_PATH = 'CTUTeamProject.db'
+
+
+@app.route('/fetch_stock_order_report')
+def fetch_stock_order_report():
+    conn = connect_db()
+    query = '''
+    SELECT 
+        BookInfo.ID, 
+        BookInfo.Title, 
+        BookInventory.OnHandQty, 
+        BookInventory.StockMin, 
+        BookInventory.StockMax, 
+        printf('$%.2f', BookInfo.Cost) as BookCost, 
+        (BookInventory.StockMax - BookInventory.OnHandQty) as OrderQty, 
+        printf('$%.2f', (BookInventory.StockMax - BookInventory.OnHandQty) * BookInfo.Cost) as TotalCost
+    FROM 
+        BookInventory
+    JOIN 
+        BookInfo ON BookInventory.BookInfoID = BookInfo.ID
+    WHERE 
+        BookInventory.OnHandQty < BookInventory.StockMin OR BookInventory.OnHandQty = 0
+    '''
+    cursor = conn.execute(query)
+    rows = cursor.fetchall()
+    columns = [description[0] for description in cursor.description]
+    conn.close()
+
+    if rows:
+        data = {
+            "success": True,
+            "columns": columns,
+            "rows": [tuple(row) for row in rows]
+        }
+    else:
+        data = {
+            "success": False,
+            "message": "No data available"
+        }
+
+    return jsonify(data)
+
+#Function to create Stock Order
+@app.route('/place_order', methods=['POST'])
+def place_order():
+    order_data = request.json
+    order_id = ''.join(random.choices(string.digits, k=10)) + '.txt'
+    order_path = os.path.join('orders', order_id)
+
+    if not os.path.exists('orders'):
+        os.makedirs('orders')
+
+    with open(order_path, 'w') as file:
+        for item in order_data:
+            file.write(f"ID: {item['ID']}, OrderQty: {item['orderQty']}, TotalCost: {item['totalCost']}\n")
+
+    return jsonify({"success": True, "order_id": order_id})
 
 # Function to query the database
 def query_database(query, params=()):

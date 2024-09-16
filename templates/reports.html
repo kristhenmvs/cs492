@@ -132,6 +132,7 @@
           <option value="" disabled selected>Select a report type</option>
           <option value="item">Sales by Item</option>
           <option value="customer">Sales by Customer</option>
+          <option value="stockorder">Stock Order</option>
         </select>
         <button type="button" id="genReport" onclick="generateReport()">
           Generate Report
@@ -178,7 +179,11 @@
           fetch(`/generate_report?type=${encodeURIComponent(reportType)}`)
             .then((response) => response.json())
             .then((data) => {
+              if (reportType === "stockorder") {
+                window.location.href = "/stock_order_report";
+              } else {
               displayReport(data);
+              }
             })
             .catch((error) => {
               document.getElementById(
