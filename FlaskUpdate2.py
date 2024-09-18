@@ -437,6 +437,103 @@ def generate_report():
         return jsonify({"success": True, "rows": rows, "columns": columns})
     else:
         return jsonify({"success": False, "message": "No data found"})
+    
+    @app.route('/customers')
+def customers():
+    return render_template('customers.html')
+
+
+@app.route('/all_customer')
+def all_customer():
+    conn = connect_db()
+    cursor = conn.cursor()
+    query = "SELECT * FROM CustomerInfo"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    conn.close()
+
+    return render_template('customer_list.html', customers=rows)
+
+
+@app.route('/selected_customer')
+def selected_customer():
+    customer_id = request.args.get('customerId')
+    conn = connect_db()
+    cursor = conn.cursor()
+    query = "SELECT * FROM CustomerInfo WHERE CustomerInfo.Id = ? OR CustomerInfo.First_Name LIKE ?"
+    cursor.execute(query, (customer_id, '%' + customer_id + '%'))
+    rows = cursor.fetchall()
+    conn.close()
+    return render_template('customer_list.html', customers=rows)
+
+
+@app.route('/save_customer', methods=['POST'])
+def save_customer():
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'message': 'No data provided'}), 400
+
+    customer_id = data.get('Id')
+    new_First_Name = data.get('First_Name')
+    new_Last_Name = data.get('Last_Name')
+    new_Email_Add = data.get('Email_Add')
+    new_Ph_Num = data.get('Ph_Num')
+    new_Phy_Add = data.get('Phy_Add')
+    new_Phy_Add_City = data.get('Phy_Add_City')
+
+    if not all([customer_id, new_First_Name, new_Last_Name, new_Email_Add, new_Ph_Num, new_Phy_Add, new_Phy_Add_City]):
+        return jsonify({'message': 'Missing customer data'}), 400
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Fetch the current customer data
+    query = "SELECT First_Name, Last_Name, Email_Add, Ph_Num, Phy_Add, Phy_Add_City FROM CustomerInfo WHERE Id = ?"
+    cursor.execute(query, (customer_id,))
+    current_values = cursor.fetchone()
+
+    if current_values:
+        # Update the customer info in the database
+        update_query = """
+        UPDATE CustomerInfo 
+        SET First_Name = ?, Last_Name = ?, Email_Add = ?, Ph_Num = ?, Phy_Add = ?, Phy_Add_City = ? 
+        WHERE Id = ?
+        """
+        cursor.execute(update_query, (new_First_Name, new_Last_Name, new_Email_Add, new_Ph_Num, new_Phy_Add, new_Phy_Add_City, customer_id))
+        conn.commit()
+
+        conn.close()
+        return jsonify({'message': 'Customer updated successfully', 'updated_info': data}), 200
+    else:
+        conn.close()
+        return jsonify({'message': 'Customer not found'}), 404
+
+@app.route('/add_customer', methods=['POST'])
+def add_customer():
+    data = request.get_json()
+    new_First_Name = data['First_Name']
+    new_Last_Name = data['Last_Name']
+    new_Email_Add = data['Email_Add']
+    new_Ph_Num = data['Ph_Num']
+    new_Phy_Add = data['Phy_Add']
+    new_Phy_Add_City = data['Phy_Add_City']
+    
+    # Insert new customer into the database
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Assuming there is an INSERT query to add a new customer
+    insert_query = """
+        INSERT INTO CustomerInfo (First_Name, Last_Name, Email_Add, Ph_Num, Phy_Add, Phy_Add_City)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """
+    cursor.execute(insert_query, (new_First_Name, new_Last_Name, new_Email_Add, new_Ph_Num, new_Phy_Add, new_Phy_Add_City))
+    conn.commit()
+    conn.close()
+
+    # Return success message
+    return jsonify({"success": True, "message": "Customer added successfully"})
 
 if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask_app)
