@@ -1,0 +1,50 @@
+{% for customer in customers %}
+<div class="customer-display">
+  <div class="customer-name">{{ customer.First_Name }} {{ customer.Last_Name }}</div>
+  <div class="customer-details">
+    <p>ID: {{ customer.Id }}</p>
+  </div>
+  <div class="customer-item">
+    <input type="hidden" id="Id-{{ customer.Id }}" value="{{ customer.Id }}" />
+    <label for="First_Name-{{ customer.Id }}">First Name:</label>
+    <input
+      type="text"
+      id="First_Name-{{ customer.Id }}"
+      value="{{ customer.First_Name }}"
+    />
+    <label for="Last_Name-{{ customer.Id }}">Last Name:</label>
+    <input
+      type="text"
+      id="Last_Name-{{ customer.Id }}"
+      value="{{ customer.Last_Name }}"
+    />
+    <label for="Email_Add-{{ customer.Id }}">Email:</label>
+    <input
+      type="email"
+      id="Email_Add-{{ customer.Id }}"
+      value="{{ customer.Email_Add }}"
+    />
+  </br>
+  <label for="Ph_Num-{{ customer.Id }}">Phone Number:</label>
+    <input
+      type="text"
+      id="Ph_Num-{{ customer.Id }}"
+      value="{{ customer.Ph_Num }}"
+    />
+    <label for="Phy_Add-{{ customer.Id }}">Address:</label>
+    <input
+      type="text"
+      id="Phy_Add-{{ customer.Id }}"
+      value="{{ customer.Phy_Add }}"
+    />
+    <label for="Phy_Add_City-{{ customer.Id }}">City:</label>
+    <input
+      type="text"
+      id="Phy_Add_City-{{ customer.Id }}"
+      value="{{ customer.Phy_Add_City }}"
+    />
+  </br>
+    <button onclick="saveCustomer('{{ customer.Id }}')">Save</button>
+  </div>
+</div>
+{% endfor %}
