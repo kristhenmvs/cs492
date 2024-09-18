@@ -1,170 +1,189 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Inventory</title>
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        .banner {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background-color: orange;
-            color: white;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-        }
-        .nav-links {
-            display: flex;
-            gap: 20px;
-            padding-right: 20px;
-            margin-left: auto;
-        }
-        .nav-links a {
-            color: black;
-            text-decoration: none;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-        .inventory-container {
-            margin-top: 60px;
-            padding: 20px;
-            border: 2px solid orange;
-            box-shadow: 4px 4px 8px #523d29;
-            background-color: #fff;
-            width: 90%;
-            max-width: 900px;
-            text-align: center;
-        }
-        .inventory-container button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            background-color: #6ca8d9;
-            color: white;
-            cursor: pointer;
-            margin: 10px;
-        }
-        .inventory-container button:hover {
-            background-color: #0056b3;
-        }
-        .inventory-list {
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            width: 100%;
-            max-width: 900px;
-        }
-        .inventory-item {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; /* Align items to the start (left) */
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-            width: 100%;
-        }
-        .book-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .book-details {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .book-details p {
-            margin: 0;
-        }
-        .inventory-item input {
-            width: 60px;
-            padding: 5px;
-            font-size: 14px;
-        }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      .banner {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background-color: orange;
+        color: white;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+      }
+      .nav-links {
+        display: flex;
+        gap: 20px;
+        padding-right: 20px;
+        margin-left: auto;
+      }
+      .nav-links a {
+        color: black;
+        text-decoration: none;
+      }
+      .nav-links a:hover {
+        text-decoration: underline;
+      }
+      .inventory-container {
+        margin-top: 60px;
+        padding: 20px;
+        border: 2px solid orange;
+        box-shadow: 4px 4px 8px #523d29;
+        background-color: #fff;
+        width: 90%;
+        max-width: 900px;
+        text-align: center;
+      }
+      .inventory-container button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        background-color: #6ca8d9;
+        color: white;
+        cursor: pointer;
+        margin: 10px;
+      }
+      .inventory-container button:hover {
+        background-color: #0056b3;
+      }
+      .inventory-list {
+        margin-top: 20px;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        width: 100%;
+        max-width: 900px;
+      }
+      .inventory-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; /* Align items to the start (left) */
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+        width: 100%;
+      }
+      .book-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .book-details {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .book-details p {
+        margin: 0;
+      }
+      .inventory-item input {
+        width: 60px;
+        padding: 5px;
+        font-size: 14px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="banner">
-        <div class="nav-links">
-            <a href="/login">Login/Logout</a>
-            <a href="/search">Book Search</a>
-            <a href="/cart">Cart</a>
-            <a href="/inventory">Inventory</a>
-            <a href="/reports">Reports</a>
-        </div>
+      <div class="nav-links">
+        <a href="/login">Login/Logout</a>
+        <a href="/search">Book Search</a>
+        <a href="/cart" id="cartButton">Cart</a>
+        <a href="/inventory" id="inventoryLink">Inventory</a>
+        <a href="/reports" id="reportsLink">Reports</a>
+        <a href="/customers" id="customersLink">Customers</a>
+      </div>
     </div>
     <div class="inventory-container">
-        <h1>Inventory</h1>
-        <button onclick="fetchAllInventory()">All Inventory</button>
-        <button onclick="fetchSelectedInventory()">Selected Inventory</button>
-        <div class="inventory-list" id="inventoryList"></div>
+      <h1>Inventory</h1>
+      <button onclick="fetchAllInventory()">All Inventory</button>
+      <button onclick="fetchSelectedInventory()">Selected Inventory</button>
+      <div class="inventory-list" id="inventoryList"></div>
     </div>
 
     <script>
-        function fetchAllInventory() {
-            fetch('/all_inventory')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('inventoryList').innerHTML = data;
-                })
-                .catch(error => {
-                    document.getElementById('inventoryList').innerHTML = `<p>Error: ${error.message}</p>`;
-                });
+      function setNavLinksVisibility() {
+        const inventoryLink = document.getElementById("inventoryLink");
+        const reportsLink = document.getElementById("reportsLink");
+        const customersLink = document.getElementById("customersLink");
+
+        if (authLevel !== "Supervisor" && authLevel !== "Employee") {
+          inventoryLink.style.display = "none";
+          customersLink.style.display = "none";
         }
-
-        function fetchSelectedInventory() {
-            const bookId = prompt("Enter the Book ID or Title:");
-            if (bookId) {
-                fetch(`/selected_inventory?bookId=${encodeURIComponent(bookId)}`)
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('inventoryList').innerHTML = data;
-                    })
-                    .catch(error => {
-                        document.getElementById('inventoryList').innerHTML = `<p>Error: ${error.message}</p>`;
-                    });
-            }
+        if (authLevel !== "Supervisor") {
+          reportsLink.style.display = "none";
         }
+      }
 
-        function saveInventory(bookId) {
-            const stockMin = document.getElementById(`stockMin-${bookId}`).value;
-            const stockMax = document.getElementById(`stockMax-${bookId}`).value;
-            const onHandQty = document.getElementById(`onHandQty-${bookId}`).value;
+      function fetchAllInventory() {
+        fetch("/all_inventory")
+          .then((response) => response.text())
+          .then((data) => {
+            document.getElementById("inventoryList").innerHTML = data;
+          })
+          .catch((error) => {
+            document.getElementById(
+              "inventoryList"
+            ).innerHTML = `<p>Error: ${error.message}</p>`;
+          });
+      }
 
-            fetch(`/save_inventory`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                bookId: bookId,
-                stockMin: stockMin,
-                stockMax: stockMax,
-                onHandQty: onHandQty
+      function fetchSelectedInventory() {
+        const bookId = prompt("Enter the Book ID or Title:");
+        if (bookId) {
+          fetch(`/selected_inventory?bookId=${encodeURIComponent(bookId)}`)
+            .then((response) => response.text())
+            .then((data) => {
+              document.getElementById("inventoryList").innerHTML = data;
             })
+            .catch((error) => {
+              document.getElementById(
+                "inventoryList"
+              ).innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        }
+      }
+
+      function saveInventory(bookId) {
+        const stockMin = document.getElementById(`stockMin-${bookId}`).value;
+        const stockMax = document.getElementById(`stockMax-${bookId}`).value;
+        const onHandQty = document.getElementById(`onHandQty-${bookId}`).value;
+
+        fetch(`/save_inventory`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            bookId: bookId,
+            stockMin: stockMin,
+            stockMax: stockMax,
+            onHandQty: onHandQty,
+          }),
         })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);  // This should display "Inventories updated successfully"
-            console.log(data.updated_info);  // Log the updated info to the console for verification
-        })
-        .catch(error => {
+          .then((response) => response.json())
+          .then((data) => {
+            alert(data.message); // This should display "Inventories updated successfully"
+            console.log(data.updated_info); // Log the updated info to the console for verification
+          })
+          .catch((error) => {
             alert(`Error: ${error.message}`);
-        });
-    }
+          });
+      }
     </script>
-</body>
+  </body>
 </html>

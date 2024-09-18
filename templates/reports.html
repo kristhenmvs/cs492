@@ -118,9 +118,10 @@
       <div class="nav-links">
         <a href="/login">Login/Logout</a>
         <a href="/search">Book Search</a>
-        <a href="/cart">Cart</a>
+        <a href="/cart" id="cartButton">Cart</a>
         <a href="/inventory" id="inventoryLink">Inventory</a>
         <a href="/reports" id="reportsLink">Reports</a>
+        <a href="/customers" id="customersLink">Customers</a>
       </div>
     </div>
 
@@ -159,9 +160,11 @@
       function setNavLinksVisibility() {
         const inventoryLink = document.getElementById("inventoryLink");
         const reportsLink = document.getElementById("reportsLink");
+        const customersLink = document.getElementById("customersLink");
 
         if (authLevel !== "Supervisor" && authLevel !== "Employee") {
           inventoryLink.style.display = "none";
+          customersLink.style.display = "none";
         }
         if (authLevel !== "Supervisor") {
           reportsLink.style.display = "none";
@@ -182,7 +185,7 @@
               if (reportType === "stockorder") {
                 window.location.href = "/stock_order_report";
               } else {
-              displayReport(data);
+                displayReport(data);
               }
             })
             .catch((error) => {
