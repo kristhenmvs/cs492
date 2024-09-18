@@ -13,6 +13,9 @@ import webbrowser
 import threading
 import time
 import logging
+import string
+import os
+import random
 from datetime import datetime
 
 # Configure logging
@@ -285,6 +288,12 @@ def save_registration():
     userPassword = data['PsWrd']
     userEmail = data['UserEmail']
     userAuth = data['AuthLevel']
+    userPh = data['PhoneNumber']
+    useraddr = data['Address']
+    usercity = data['City']
+    userfirst = data['FirstName']
+    userlast = data['LastName']
+    today = datetime.today().strftime('%Y-%m-%d')  # Get today's date
 
     conn = connect_db()
     cursor = conn.cursor()
@@ -292,23 +301,101 @@ def save_registration():
     # Fetch the current max UserID
     cursor.execute("SELECT COALESCE(MAX(UserID), 0) FROM LogInfo")
     currentID = cursor.fetchone()[0]
-    newUserID = currentID + 1
-    
-    # Insert a new record into LogInfo
-    insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserID, UserEmail, AuthLevel) VALUES (?, ?, ?, ?, ?)"
-    
-    cursor.execute(insert_query, (userName, userPassword, newUserID, userEmail, userAuth))
+    # newUserID = currentID + 1
+    if userAuth in ('Supervisor' , 'Employee'):
+        # Instert a Sup/Emp Entry
+        insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
+        cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
+    else:
+        # Insert Customer entry into LogInfo
+        insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
+        cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
+        conn.commit()
+
+        # Insert Customer entry into CustomerInfo
+        insert_customer_query = """
+                INSERT INTO CustomerInfo (Email_Add, First_Name, Last_Name, Start_date, Ph_num, Phy_Add, Phy_Add_City)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """
+        cursor.execute(insert_customer_query, (userEmail, userfirst, userlast, today, userPh, useraddr, usercity))
+
     conn.commit()
     conn.close()
 
-    return {'message': 'Registration successful.'}
+    # return {'message': 'Registration successful.'}
+    session['username'] = userName
+    session['auth_level'] = userAuth
+
+    return jsonify({'message': 'Registration successful.', 'updated_info': {'username': userName, 'auth_level': userAuth}})
 
 @app.route('/reports')
 def reports():
-    return render_template('reports.html')
+    auth_level = session.get('auth_level')
+    return render_template('reports.html', auth_level=auth_level)
 
+# Inventory Stock Ordering
+@app.route('/stock_order_report')
+def stock_order_reports():
+    auth_level = session.get('auth_level')
+    return render_template('stock_order_report.html', auth_level=auth_level)
 # Path to the database
 DB_PATH = 'CTUTeamProject.db'
+
+
+@app.route('/fetch_stock_order_report')
+def fetch_stock_order_report():
+    conn = connect_db()
+    query = '''
+    SELECT 
+        BookInfo.ID, 
+        BookInfo.Title, 
+        BookInventory.OnHandQty, 
+        BookInventory.StockMin, 
+        BookInventory.StockMax, 
+        printf('$%.2f', BookInfo.Cost) as BookCost, 
+        (BookInventory.StockMax - BookInventory.OnHandQty) as OrderQty, 
+        printf('$%.2f', (BookInventory.StockMax - BookInventory.OnHandQty) * BookInfo.Cost) as TotalCost
+    FROM 
+        BookInventory
+    JOIN 
+        BookInfo ON BookInventory.BookInfoID = BookInfo.ID
+    WHERE 
+        BookInventory.OnHandQty < BookInventory.StockMin OR BookInventory.OnHandQty = 0
+    '''
+    cursor = conn.execute(query)
+    rows = cursor.fetchall()
+    columns = [description[0] for description in cursor.description]
+    conn.close()
+
+    if rows:
+        data = {
+            "success": True,
+            "columns": columns,
+            "rows": [tuple(row) for row in rows]
+        }
+    else:
+        data = {
+            "success": False,
+            "message": "No data available"
+        }
+
+    return jsonify(data)
+
+#Function to create Stock Order
+@app.route('/place_order', methods=['POST'])
+def place_order():
+    order_data = request.json
+    order_id = ''.join(random.choices(string.digits, k=10)) + '.txt'
+    order_path = os.path.join('orders', order_id)
+
+    if not os.path.exists('orders'):
+        os.makedirs('orders')
+
+    with open(order_path, 'w') as file:
+        for item in order_data:
+            file.write(f"ID: {item['ID']}, OrderQty: {item['orderQty']}, TotalCost: {item['totalCost']}\n")
+
+    return jsonify({"success": True, "order_id": order_id})
 
 # Function to query the database
 def query_database(query, params=()):
@@ -325,21 +412,22 @@ def query_database(query, params=()):
 def generate_report():
     report_type = request.args.get('type', None)
 
+
     if report_type == 'item':
         query = """
-            SELECT BookInfo.BookTitle, SUM(SalesRecords.QuantitySold) AS TotalSales
-            FROM SalesRecords
-            JOIN BookInfo ON SalesRecords.BookID = BookInfo.BookID
-            GROUP BY BookInfo.BookTitle
-            ORDER BY TotalSales DESC;
+            SELECT sr.BookSold AS BookID, bi.Title, bi.SalePrice, bi2.StockMin, bi2.StockMax, COUNT(sr.BookSold) AS TotalSold
+            FROM SalesRecords sr
+            JOIN BookInfo bi ON sr.BookSold = bi.ID
+            JOIN BookInventory bi2 ON bi.ID = bi2.BookInfoID
+            GROUP BY sr.BookSold, bi.Title, bi.SalePrice, bi2.StockMin, bi2.StockMax
+            ORDER BY sr.BookSold;
         """
     elif report_type == 'customer':
         query = """
-            SELECT CustomerInfo.FullName, SUM(SalesRecords.QuantitySold) AS TotalPurchases
-            FROM SalesRecords
-            JOIN CustomerInfo ON SalesRecords.CustomerID = CustomerInfo.CustomerID
-            GROUP BY CustomerInfo.FullName
-            ORDER BY TotalPurchases DESC;
+            SELECT CI.First_Name, CI.Last_Name, COUNT(SR.SoldTo) AS TotalSalesRecords
+            FROM CustomerInfo CI
+            JOIN SalesRecords SR ON CI.ID = SR.SoldTo
+            GROUP BY CI.First_Name, CI.Last_Name;
         """
     else:
         return jsonify({"success": False, "message": "Invalid report type"})
