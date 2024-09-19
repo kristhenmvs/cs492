@@ -6,17 +6,18 @@
 
 """
 
-from flask import Flask, request, render_template, redirect, session, jsonify
-import sqlite3
-from flask_session import Session
-import webbrowser
-import threading
-import time
 import logging
-import string
 import os
 import random
-from datetime import datetime
+import sqlite3
+import string
+import threading
+import time
+import webbrowser
+
+from flask import Flask, request, render_template, redirect, session, jsonify
+
+from flask_session import Session
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -52,7 +53,6 @@ def all_inventory():
     conn.close()
     return render_template('inventory_list.html', books=rows)
 
-
 @app.route('/selected_inventory')
 def selected_inventory():
     book_id = request.args.get('bookId')
@@ -63,7 +63,6 @@ def selected_inventory():
     rows = cursor.fetchall()
     conn.close()
     return render_template('inventory_list.html', books=rows)
-
 
 @app.route('/save_inventory', methods=['POST'])
 def save_inventory():
@@ -89,7 +88,6 @@ def save_inventory():
 
         # Insert a new record into InventoryAdjustments
         insert_query = "INSERT INTO InventoryAdjustments (BookInfoID, PriorMin, PriorMax, PriorOh, NewMin, NewMax, User) VALUES (?, ?, ?, ?, ?, ?, ?)"
-
         cursor.execute(insert_query, (book_id, prior_stock_min, prior_stock_max, prior_on_hand_qty, new_stock_min, new_stock_max, username))
 
         # Update the BookInventory table
@@ -102,10 +100,6 @@ def save_inventory():
     else:
         conn.close()
         return {'message': 'Book not found'}
-
-
-
-
 
 # Route to look up a book by title, author, or ID
 @app.route('/lookup_book', methods=['GET'])
@@ -139,11 +133,9 @@ def lookup_book():
     else:
         return render_template('error.html', message="No books found")
 
-
 @app.template_filter('currency')
 def currency_filter(value):
     return "${:,.2f}".format(value)
-
 
 @app.route('/check_login', methods=['POST'])
 def check_login():
@@ -169,7 +161,6 @@ def check_login():
     else:
         return render_template('error.html', message="Invalid username or password")
 
-
 @app.route('/search')
 def search():
     if 'username' in session and 'auth_level' in session:
@@ -178,7 +169,6 @@ def search():
         return render_template('book_search.html', username=username, auth_level=auth_level)
     else:
         return redirect('/login')
-
 
 @app.route('/login')
 def login_form():
@@ -260,280 +250,14 @@ def checkout():
                     INSERT INTO SalesRecords (SoldBy, SoldTo, SalesDate, SalesPrice, BookSold)
                     VALUES (?, ?, ?, ?, ?)
                 """
-                cursor.execute(insert_query, (customer[0], customer[0], today, book['SalePrice'], book['ID']))
-
-            # Reduce OnHandQty by 1 in the BookInventory table
-            update_query = "UPDATE BookInventory SET OnHandQty = OnHandQty - 1 WHERE BookInfoID = ?"
-            cursor.execute(update_query, (book_id,))
+                cursor.execute(insert_query, (user_id, customer['id'], today, book['SalePrice'], book['ID']))
 
         conn.commit()
         conn.close()
-        return redirect('/checkout_success')
+        return jsonify({'message': 'Checkout successful'})
     except Exception as e:
-        logging.warning(f"Error during checkout: {e}")
-        return jsonify({'message': 'An error occurred during checkout.'}), 500
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/checkout_success')
-def checkout_success():
-    return render_template('checkout_success.html')
-
-@app.route('/save_registration', methods=['POST'])
-def save_registration():
-    data = request.get_json()
-    userName = data['UserNm']
-    userPassword = data['PsWrd']
-    userEmail = data['UserEmail']
-    userAuth = data['AuthLevel']
-    userPh = data['PhoneNumber']
-    useraddr = data['Address']
-    usercity = data['City']
-    userfirst = data['FirstName']
-    userlast = data['LastName']
-    today = datetime.today().strftime('%Y-%m-%d')  # Get today's date
-
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    # Fetch the current max UserID
-    cursor.execute("SELECT COALESCE(MAX(UserID), 0) FROM LogInfo")
-    currentID = cursor.fetchone()[0]
-    # newUserID = currentID + 1
-    if userAuth in ('Supervisor' , 'Employee'):
-        # Instert a Sup/Emp Entry
-        insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
-        cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
-    else:
-        # Insert Customer entry into LogInfo
-        insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
-        cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
-        conn.commit()
-
-        # Insert Customer entry into CustomerInfo
-        insert_customer_query = """
-                INSERT INTO CustomerInfo (Email_Add, First_Name, Last_Name, Start_date, Ph_num, Phy_Add, Phy_Add_City)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """
-        cursor.execute(insert_customer_query, (userEmail, userfirst, userlast, today, userPh, useraddr, usercity))
-
-    conn.commit()
-    conn.close()
-
-    # return {'message': 'Registration successful.'}
-    session['username'] = userName
-    session['auth_level'] = userAuth
-
-    return jsonify({'message': 'Registration successful.', 'updated_info': {'username': userName, 'auth_level': userAuth}})
-
-@app.route('/reports')
-def reports():
-    auth_level = session.get('auth_level')
-    return render_template('reports.html', auth_level=auth_level)
-
-# Inventory Stock Ordering
-@app.route('/stock_order_report')
-def stock_order_reports():
-    auth_level = session.get('auth_level')
-    return render_template('stock_order_report.html', auth_level=auth_level)
-# Path to the database
-DB_PATH = 'CTUTeamProject.db'
-
-
-@app.route('/fetch_stock_order_report')
-def fetch_stock_order_report():
-    conn = connect_db()
-    query = '''
-    SELECT 
-        BookInfo.ID, 
-        BookInfo.Title, 
-        BookInventory.OnHandQty, 
-        BookInventory.StockMin, 
-        BookInventory.StockMax, 
-        printf('$%.2f', BookInfo.Cost) as BookCost, 
-        (BookInventory.StockMax - BookInventory.OnHandQty) as OrderQty, 
-        printf('$%.2f', (BookInventory.StockMax - BookInventory.OnHandQty) * BookInfo.Cost) as TotalCost
-    FROM 
-        BookInventory
-    JOIN 
-        BookInfo ON BookInventory.BookInfoID = BookInfo.ID
-    WHERE 
-        BookInventory.OnHandQty < BookInventory.StockMin OR BookInventory.OnHandQty = 0
-    '''
-    cursor = conn.execute(query)
-    rows = cursor.fetchall()
-    columns = [description[0] for description in cursor.description]
-    conn.close()
-
-    if rows:
-        data = {
-            "success": True,
-            "columns": columns,
-            "rows": [tuple(row) for row in rows]
-        }
-    else:
-        data = {
-            "success": False,
-            "message": "No data available"
-        }
-
-    return jsonify(data)
-
-#Function to create Stock Order
-@app.route('/place_order', methods=['POST'])
-def place_order():
-    order_data = request.json
-    order_id = ''.join(random.choices(string.digits, k=10)) + '.txt'
-    order_path = os.path.join('orders', order_id)
-
-    if not os.path.exists('orders'):
-        os.makedirs('orders')
-
-    with open(order_path, 'w') as file:
-        for item in order_data:
-            file.write(f"ID: {item['ID']}, OrderQty: {item['orderQty']}, TotalCost: {item['totalCost']}\n")
-
-    return jsonify({"success": True, "order_id": order_id})
-
-# Function to query the database
-def query_database(query, params=()):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(query, params)
-    rows = cursor.fetchall()
-    columns = [description[0] for description in cursor.description]
-    conn.close()
-    return rows, columns
-
-# Generate report based on sales item or customer
-@app.route('/generate_report', methods=['GET'])
-def generate_report():
-    report_type = request.args.get('type', None)
-
-
-    if report_type == 'item':
-        query = """
-            SELECT sr.BookSold AS BookID, bi.Title, bi.SalePrice, bi2.StockMin, bi2.StockMax, COUNT(sr.BookSold) AS TotalSold
-            FROM SalesRecords sr
-            JOIN BookInfo bi ON sr.BookSold = bi.ID
-            JOIN BookInventory bi2 ON bi.ID = bi2.BookInfoID
-            GROUP BY sr.BookSold, bi.Title, bi.SalePrice, bi2.StockMin, bi2.StockMax
-            ORDER BY sr.BookSold;
-        """
-    elif report_type == 'customer':
-        query = """
-            SELECT CI.First_Name, CI.Last_Name, COUNT(SR.SoldTo) AS TotalSalesRecords
-            FROM CustomerInfo CI
-            JOIN SalesRecords SR ON CI.ID = SR.SoldTo
-            GROUP BY CI.First_Name, CI.Last_Name;
-        """
-    else:
-        return jsonify({"success": False, "message": "Invalid report type"})
-
-    rows, columns = query_database(query)
-    if rows:
-        return jsonify({"success": True, "rows": rows, "columns": columns})
-    else:
-        return jsonify({"success": False, "message": "No data found"})
-    
-    @app.route('/customers')
-def customers():
-    return render_template('customers.html')
-
-
-@app.route('/all_customer')
-def all_customer():
-    conn = connect_db()
-    cursor = conn.cursor()
-    query = "SELECT * FROM CustomerInfo"
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    conn.close()
-
-    return render_template('customer_list.html', customers=rows)
-
-
-@app.route('/selected_customer')
-def selected_customer():
-    customer_id = request.args.get('customerId')
-    conn = connect_db()
-    cursor = conn.cursor()
-    query = "SELECT * FROM CustomerInfo WHERE CustomerInfo.Id = ? OR CustomerInfo.First_Name LIKE ?"
-    cursor.execute(query, (customer_id, '%' + customer_id + '%'))
-    rows = cursor.fetchall()
-    conn.close()
-    return render_template('customer_list.html', customers=rows)
-
-
-@app.route('/save_customer', methods=['POST'])
-def save_customer():
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({'message': 'No data provided'}), 400
-
-    customer_id = data.get('Id')
-    new_First_Name = data.get('First_Name')
-    new_Last_Name = data.get('Last_Name')
-    new_Email_Add = data.get('Email_Add')
-    new_Ph_Num = data.get('Ph_Num')
-    new_Phy_Add = data.get('Phy_Add')
-    new_Phy_Add_City = data.get('Phy_Add_City')
-
-    if not all([customer_id, new_First_Name, new_Last_Name, new_Email_Add, new_Ph_Num, new_Phy_Add, new_Phy_Add_City]):
-        return jsonify({'message': 'Missing customer data'}), 400
-
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    # Fetch the current customer data
-    query = "SELECT First_Name, Last_Name, Email_Add, Ph_Num, Phy_Add, Phy_Add_City FROM CustomerInfo WHERE Id = ?"
-    cursor.execute(query, (customer_id,))
-    current_values = cursor.fetchone()
-
-    if current_values:
-        # Update the customer info in the database
-        update_query = """
-        UPDATE CustomerInfo 
-        SET First_Name = ?, Last_Name = ?, Email_Add = ?, Ph_Num = ?, Phy_Add = ?, Phy_Add_City = ? 
-        WHERE Id = ?
-        """
-        cursor.execute(update_query, (new_First_Name, new_Last_Name, new_Email_Add, new_Ph_Num, new_Phy_Add, new_Phy_Add_City, customer_id))
-        conn.commit()
-
-        conn.close()
-        return jsonify({'message': 'Customer updated successfully', 'updated_info': data}), 200
-    else:
-        conn.close()
-        return jsonify({'message': 'Customer not found'}), 404
-
-@app.route('/add_customer', methods=['POST'])
-def add_customer():
-    data = request.get_json()
-    new_First_Name = data['First_Name']
-    new_Last_Name = data['Last_Name']
-    new_Email_Add = data['Email_Add']
-    new_Ph_Num = data['Ph_Num']
-    new_Phy_Add = data['Phy_Add']
-    new_Phy_Add_City = data['Phy_Add_City']
-    
-    # Insert new customer into the database
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    # Assuming there is an INSERT query to add a new customer
-    insert_query = """
-        INSERT INTO CustomerInfo (First_Name, Last_Name, Email_Add, Ph_Num, Phy_Add, Phy_Add_City)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """
-    cursor.execute(insert_query, (new_First_Name, new_Last_Name, new_Email_Add, new_Ph_Num, new_Phy_Add, new_Phy_Add_City))
-    conn.commit()
-    conn.close()
-
-    # Return success message
-    return jsonify({"success": True, "message": "Customer added successfully"})
+        logging.error(f"Error during checkout: {e}")
+        return jsonify({'message': 'Checkout failed'}), 500
 
 if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask_app)
@@ -547,8 +271,3 @@ if __name__ == '__main__':
 
     # Open the local webpage in Chrome
     webbrowser.get(chrome_path).open_new_tab('http://127.0.0.1:5000/login')
-
-
-
-
-
