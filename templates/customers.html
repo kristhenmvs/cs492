@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>customer</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      .banner {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background-color: orange;
+        color: white;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+      }
+      .nav-links {
+        display: flex;
+        gap: 20px;
+        padding-right: 20px;
+        margin-left: auto;
+      }
+      .nav-links a {
+        color: black;
+        text-decoration: none;
+      }
+      .nav-links a:hover {
+        text-decoration: underline;
+      }
+      .customer-container {
+        margin-top: 60px;
+        padding: 20px;
+        border: 2px solid orange;
+        box-shadow: 4px 4px 8px #523d29;
+        background-color: #fff;
+        width: 90%;
+        max-width: 900px;
+        text-align: center;
+      }
+      .customer-container button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        background-color: #6ca8d9;
+        color: white;
+        cursor: pointer;
+        margin: 10px;
+      }
+      .customer-container button:hover {
+        background-color: #0056b3;
+      }
+      .customer-list {
+        margin-top: 20px;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        width: 100%;
+        max-width: 900px;
+      }
+      .customer-item {
+        display: block;
+        flex-direction: column;
+        align-items: flex-start; /* Align items to the start (left) */
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+        width: 100%;
+      }
+      .customer-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .customer-details {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .customer-details p {
+        margin: 0;
+      }
+      .customer-item input {
+        width: 200px;
+        padding: 5px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <div class="nav-links">
+        <a href="/login">Login/Logout</a>
+        <a href="/search">Book Search</a>
+        <a href="/cart">Cart</a>
+        <a href="/inventory">Inventory</a>
+        <a href="/reports">Reports</a>
+        <a href="/customers" id="customersLink">Customers</a>
+      </div>
+    </div>
+    <div class="customer-container">
+      <h1>Customers</h1>
+      <button onclick="fetchAllCustomers()">Show All customers</button>
+      <button onclick="fetchSelectedCustomer()">Show Selected customer</button>
+      <button onclick="showNewCustomerForm()">Add New Customer</button>
+
+      <!-- Create a form for adding a new customer (initially hidden) -->
+      <div id="newCustomerForm" style="display: none">
+        <h3>Add New Customer</h3>
+        <form id="newCustomerFormElement">
+          <label for="newFirstName">First Name:</label>
+          <input type="text" id="newFirstName" required />
+          <label for="newLastName">Last Name:</label>
+          <input type="text" id="newLastName" required />
+          <label for="newEmail">Email:</label>
+          <input type="email" id="newEmail" required />
+          <br />
+          <label for="newPhNum">Phone Number:</label>
+          <input type="number" id="newPhNum" required />
+          <label for="newPhyAdd">Address:</label>
+          <input type="text" id="newPhyAdd" required />
+          <label for="newPhyAddCity">City:</label>
+          <input type="text" id="newPhyAddCity" required />
+          <br />
+          <button onclick="addNewCustomer()">Submit</button>
+        </form>
+      </div>
+
+      <div class="customer-list" id="customerList"></div>
+    </div>
+
+    <script>
+      function setNavLinksVisibility() {
+        const inventoryLink = document.getElementById("inventoryLink");
+        const reportsLink = document.getElementById("reportsLink");
+        const customersLink = document.getElementById("customersLink");
+
+        if (authLevel !== "Supervisor" && authLevel !== "Employee") {
+          inventoryLink.style.display = "none";
+          customersLink.style.display = "none";
+        }
+        if (authLevel !== "Supervisor") {
+          reportsLink.style.display = "none";
+        }
+      }
+
+      function fetchAllCustomers() {
+        fetch("/all_customer")
+          .then((response) => response.text())
+          .then((data) => {
+            document.getElementById("customerList").innerHTML = data;
+          })
+          .catch((error) => {
+            document.getElementById(
+              "customerList"
+            ).innerHTML = `<p>Error: ${error.message}</p>`;
+          });
+      }
+
+      function fetchSelectedCustomer() {
+        const customerId = prompt("Enter the Customer ID or Name:");
+        if (customerId) {
+          fetch(
+            `/selected_customer?customerId=${encodeURIComponent(customerId)}`
+          )
+            .then((response) => response.text())
+            .then((data) => {
+              document.getElementById("customerList").innerHTML = data;
+            })
+            .catch((error) => {
+              document.getElementById(
+                "customerList"
+              ).innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        }
+      }
+
+      function saveCustomer(customerId) {
+        const customerID = document.getElementById(`Id-${customerId}`).value;
+        const firstName = document.getElementById(
+          `First_Name-${customerId}`
+        ).value;
+        const lastName = document.getElementById(
+          `Last_Name-${customerId}`
+        ).value;
+        const email = document.getElementById(`Email_Add-${customerId}`).value;
+        const phNum = document.getElementById(`Ph_Num-${customerId}`).value;
+        const address = document.getElementById(`Phy_Add-${customerId}`).value;
+        const addCity = document.getElementById(
+          `Phy_Add_City-${customerId}`
+        ).value;
+
+        console.log(
+          customerID,
+          firstName,
+          lastName,
+          email,
+          phNum,
+          address,
+          addCity
+        ); // Check if these elements exist
+
+        if (
+          !customerID ||
+          !firstName ||
+          !lastName ||
+          !email ||
+          !phNum ||
+          !address ||
+          !addCity
+        ) {
+          alert("Error: Some fields are missing.");
+          return; // Exit the function if any field is missing
+        }
+
+        fetch(`/save_customer`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            Id: customerID,
+            First_Name: firstName,
+            Last_Name: lastName,
+            Email_Add: email,
+            Ph_Num: phNum,
+            Phy_Add: address,
+            Phy_Add_City: addCity,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            alert(data.message); // This should display "Customer updated successfully"
+            console.log(data.updated_info); // Log the updated info to the console for verification
+          })
+          .catch((error) => {
+            alert(`Error: ${error.message}`);
+          });
+      }
+
+      // Show the form when "Add New Customer" is clicked
+      function showNewCustomerForm() {
+        document.getElementById("newCustomerForm").style.display = "block";
+      }
+
+      // Function to add a new customer
+      function addNewCustomer() {
+        const firstName = document.getElementById("newFirstName").value;
+        const lastName = document.getElementById("newLastName").value;
+        const email = document.getElementById("newEmail").value;
+        const phNum = document.getElementById("newPhNum").value;
+        const address = document.getElementById("newPhyAdd").value;
+        const addCity = document.getElementById("newPhyAddCity").value;
+
+        if (
+          !firstName ||
+          !lastName ||
+          !email ||
+          !phNum ||
+          !address ||
+          !addCity
+        ) {
+          alert("Please fill in all fields.");
+          return;
+        }
+
+        fetch(`/add_customer`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            First_Name: firstName,
+            Last_Name: lastName,
+            Email_Add: email,
+            Ph_Num: phNum,
+            Phy_Add: address,
+            Phy_Add_City: addCity,
+          }),
+        })
+          .then((data) => {
+            if (data.success) {
+              alert(data.message); // Display success message
+              document.getElementById("newCustomerFormElement").reset(); // Reset the form
+              document.getElementById("newCustomerForm").style.display = "none"; // Hide the form
+              fetchAllCustomers(); // Refresh the customer list
+            } else {
+              alert(`Error: ${data.message}`);
+            }
+          })
+          .catch((error) => {
+            alert(`Fetch error: ${error.message}`);
+          });
+      }
+    </script>
+  </body>
+</html>
