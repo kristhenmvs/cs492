@@ -45,3 +45,51 @@
 </body> 
 
 </html> 
+
+<!DOCTYPE html> 
+
+<html lang=”en”> 
+
+<head> 
+
+    <meta charset=”UTF-8”> 
+
+    <meta name=”viewport” content=”width=device-width, initial-scale=1.0”> 
+
+    <title>Authorization Levels</title> 
+
+    <script> 
+
+        Function checkAuthorization(role) { 
+
+            If (role === ‘supervisor’) { 
+
+                Document.getElementById(‘supervisor-content’).style.display = ‘block’; 
+
+            } else { 
+
+                Document.getElementById(‘supervisor-content’).style.display = ‘none’; 
+
+            } 
+
+        } 
+
+    </script> 
+
+</head> 
+
+<body onload=”checkAuthorization(‘supervisor’)”> 
+
+    <h1>Welcome to the Dashboard</h1> 
+
+    <div id=”supervisor-content” style=”display: none;”> 
+
+        <h2>Supervisor Section</h2> 
+
+        <p>This content is only visible to supervisors.</p> 
+
+    </div> 
+
+</body> 
+
+</html> 
