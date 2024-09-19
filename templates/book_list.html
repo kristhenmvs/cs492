@@ -62,14 +62,14 @@
             <td>{{ book['OnHandQty'] }}</td>
             <td>{{ book.SalePrice | currency }}</td>
             <td>
-               {% if book['OnHandQty'] > 0 %}
+     {% if book['OnHandQty'] > 0 %}
     <button class="sell-button" data-bookid="{{ book.id }}">
         {{ 'Purchase' if auth_level == 'Customer' else 'Sell' }}
     </button>
 {% else %}
-    <button class="preorder-button" data-bookid="{{ book.id }}">
-        Preorder
-    </button>
+    <button class="sell-button" data-bookid="{{ book.id }}" onclick="this.innerText='Out of Stock'; this.disabled=true; this.style.backgroundColor='grey'; this.style.color='white';">
+    sell
+</button>
 {% endif %}
             </td>
         </tr>
