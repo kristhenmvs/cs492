@@ -438,7 +438,7 @@ def generate_report():
     else:
         return jsonify({"success": False, "message": "No data found"})
     
-    @app.route('/customers')
+@app.route('/customers')
 def customers():
     return render_template('customers.html')
 
