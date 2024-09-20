@@ -66,11 +66,11 @@
     <button class="sell-button" data-bookid="{{ book.id }}">
         {{ 'Purchase' if auth_level == 'Customer' else 'Sell' }}
     </button>
-{% else %}
-    <button class="sell-button" data-bookid="{{ book.id }}" onclick="this.innerText='Out of Stock'; this.disabled=true; this.style.backgroundColor='grey'; this.style.color='white';">
-    sell
-</button>
-{% endif %}
+    {% else %}
+    <button class="sell-button" data-bookid="{{ book.id }}">
+        Order
+    </button>
+    {% endif %}
             </td>
         </tr>
         {% endfor %}
