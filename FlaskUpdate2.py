@@ -512,6 +512,8 @@ def save_customer():
     current_values = cursor.fetchone()
 
     if current_values:
+        current_email = current_values[3]
+
         # Update the customer info in the database
         update_query = """
         UPDATE CustomerInfo 
@@ -519,8 +521,14 @@ def save_customer():
         WHERE Id = ?
         """
         cursor.execute(update_query, (new_First_Name, new_Last_Name, new_Email_Add, new_Ph_Num, new_Phy_Add, new_Phy_Add_City, customer_id))
-        conn.commit()
+        
+        # Check if the email has changed
+        if new_Email_Add != current_email:
+            # Update the email in LogInfo as well
+            update_loginfo_query = "UPDATE LogInfo SET UserEmail = ? WHERE UserEmail = ?"
+            cursor.execute(update_loginfo_query, (new_Email_Add, current_email))
 
+        conn.commit()
         conn.close()
         return jsonify({'message': 'Customer updated successfully', 'updated_info': data}), 200
     else:
