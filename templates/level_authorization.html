@@ -1,85 +1,63 @@
-<!DOCTYPE html> 
-<html lang="en"> 
-<head> 
-    <meta charset="UTF-8"> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>Authorization Levels</title> 
+HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supervisor Authorization</title>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Supervisor Authorization</h2>
+        <form id="authorizationForm" action="process_authorization.php" method="post">
+            <label for="supervisorId">Supervisor ID:</label>
+            <input type="text" id="supervisorId" name="supervisorId" required>
+            <br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <br>
+            <button type="submit">Authorize</button>
+        </form>   
 
-</head> 
+        <div id="message"></div>
+    </div>
 
-<body onload="checkAuthorization("supervisor")"> 
-    <h1>Welcome to the Dashboard</h1> 
-    <div id="supervisor-content" style="display: none;"> 
+    <script>
+        
+    </script>
+</body>
+</html>
 
-        <h2>Supervisor Section</h2> 
+<?php
+session_start();
 
-        <p>This content is only visible to supervisors.</p> 
+// Replace with your database connection details
+$servername = "your_servername";
+$username = "your_username";
+$password = "your_password";
+$dbname = "your_database_name";   
 
-    </div> 
-    <script> 
 
-        function checkAuthorization(role) { 
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-            if (role === "supervisor"){ 
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);   
 
-                Document.getElementById("supervisor-content").style.display = "block"; 
+}
 
-            } else { 
+$supervisorId = $_POST['supervisorId'];
+$password = $_POST['password'];
 
-                Document.getElementById("supervisor-content").style.display = "none"; 
+// Validate credentials against the database
+$sql = "SELECT * FROM supervisors WHERE supervisor_id = '$supervisorId' AND password = '$password'";
+$result = $conn->query($sql);
 
-            } 
+if ($result->num_rows > 0) {
+    // Authorization successful
+    $_SESSION['supervisor_id'] = $supervisorId;
+    header("Location: supervisor_dashboard.php");
+    exit();
+} else {
+    // Authorization failed
+    echo json_encode(['authorized' => false]);
+}
 
-        } 
-
-    </script> 
-</body> 
-</html> 
-
-<!DOCTYPE html> 
-
-<html lang=”en”> 
-
-<head> 
-
-    <meta charset=”UTF-8”> 
-
-    <meta name=”viewport” content=”width=device-width, initial-scale=1.0”> 
-
-    <title>Authorization Levels</title> 
-
-    <script> 
-
-        Function checkAuthorization(role) { 
-
-            If (role === ‘supervisor’) { 
-
-                Document.getElementById(‘supervisor-content’).style.display = ‘block’; 
-
-            } else { 
-
-                Document.getElementById(‘supervisor-content’).style.display = ‘none’; 
-
-            } 
-
-        } 
-
-    </script> 
-
-</head> 
-
-<body onload=”checkAuthorization(‘supervisor’)”> 
-
-    <h1>Welcome to the Dashboard</h1> 
-
-    <div id=”supervisor-content” style=”display: none;”> 
-
-        <h2>Supervisor Section</h2> 
-
-        <p>This content is only visible to supervisors.</p> 
-
-    </div> 
-
-</body> 
-
-</html> 
+$conn->close();
