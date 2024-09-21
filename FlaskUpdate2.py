@@ -307,26 +307,44 @@ def save_registration():
         insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
         cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
     else:
-        # Insert Customer entry into LogInfo
-        insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
-        cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
-        conn.commit()
+        # Check if email already exists in CustomerInfo
+        cursor.execute("SELECT * FROM CustomerInfo WHERE Email_Add = ?", (userEmail,))
+        existing_customer = cursor.fetchone()
 
-        # Insert Customer entry into CustomerInfo
-        insert_customer_query = """
-                INSERT INTO CustomerInfo (Email_Add, First_Name, Last_Name, Start_date, Ph_num, Phy_Add, Phy_Add_City)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """
-        cursor.execute(insert_customer_query, (userEmail, userfirst, userlast, today, userPh, useraddr, usercity))
+        if existing_customer:
+            # If the customer already exists, just insert into LogInfo
+            insert_loginfo_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
+            cursor.execute(insert_loginfo_query, (userName, userPassword, userEmail, userAuth))
+            conn.commit()
+            conn.close()
 
-    conn.commit()
-    conn.close()
+            session['username'] = userName
+            session['auth_level'] = userAuth
 
-    # return {'message': 'Registration successful.'}
-    session['username'] = userName
-    session['auth_level'] = userAuth
+            return jsonify({'message': 'Registration successful.', 'updated_info': {'username': userName, 'auth_level': userAuth}})
+        
+        else:
+           
+            # Insert Customer entry into LogInfo
+            insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
+            cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
+            conn.commit()
 
-    return jsonify({'message': 'Registration successful.', 'updated_info': {'username': userName, 'auth_level': userAuth}})
+            # Insert Customer entry into CustomerInfo
+            insert_customer_query = """
+                    INSERT INTO CustomerInfo (Email_Add, First_Name, Last_Name, Start_date, Ph_num, Phy_Add, Phy_Add_City)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """
+            cursor.execute(insert_customer_query, (userEmail, userfirst, userlast, today, userPh, useraddr, usercity))
+
+            conn.commit()
+            conn.close()
+
+            # return {'message': 'Registration successful.'}
+            session['username'] = userName
+            session['auth_level'] = userAuth
+
+            return jsonify({'message': 'Registration successful.', 'updated_info': {'username': userName, 'auth_level': userAuth}})
 
 @app.route('/reports')
 def reports():
