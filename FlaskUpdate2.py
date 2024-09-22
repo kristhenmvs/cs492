@@ -40,7 +40,8 @@ def connect_db():
 
 @app.route('/inventory')
 def inventory():
-    return render_template('inventory.html')
+    auth_level = session.get('auth_level', 'Customer')
+    return render_template('inventory.html',auth_level=auth_level)
 
 
 @app.route('/all_inventory')
@@ -459,7 +460,8 @@ def generate_report():
     
 @app.route('/customers')
 def customers():
-    return render_template('customers.html')
+    auth_level = session['auth_level']
+    return render_template('customers.html', auth_level=auth_level)
 
 
 @app.route('/all_customer')

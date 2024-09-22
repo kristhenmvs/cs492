@@ -19,13 +19,17 @@
         position: fixed;
         top: 0;
         width: 100%;
-        background-color: orange;
+        background-color: orange; /* Solid orange background */
         color: white;
         padding: 10px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         z-index: 1000;
+        transition: transform 0.3s ease; /* Smooth transition */
+      }
+      .banner.hidden {
+        transform: translateY(-100%); /* Move the banner out of view */
       }
       .nav-links {
         display: flex;
@@ -39,6 +43,13 @@
       }
       .nav-links a:hover {
         text-decoration: underline;
+      }
+      .toggle-button {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        cursor: pointer;
+        z-index: 1001; /* Ensure it stays above the banner */
       }
       .customer-container {
         margin-top: 60px;
@@ -100,13 +111,14 @@
     </style>
   </head>
   <body>
-    <div class="banner">
+    <div class="toggle-button" onclick="toggleBanner()">☰</div>
+    <div class="banner" id="banner">
       <div class="nav-links">
         <a href="/login">Login/Logout</a>
         <a href="/search">Book Search</a>
-        <a href="/cart">Cart</a>
-        <a href="/inventory">Inventory</a>
-        <a href="/reports">Reports</a>
+        <a href="/cart" id="cartButton">Cart</a>
+        <a href="/inventory" id="inventoryLink">Inventory</a>
+        <a href="/reports" id="reportsLink">Reports</a>
         <a href="/customers" id="customersLink">Customers</a>
       </div>
     </div>
@@ -142,6 +154,13 @@
     </div>
 
     <script>
+      const authLevel = "{{ auth_level }}"; // Pass the auth_level from Flask
+      // Function to toggle the banner visibility
+      function toggleBanner() {
+        const banner = document.getElementById("banner");
+        banner.classList.toggle("hidden");
+      }
+
       function setNavLinksVisibility() {
         const inventoryLink = document.getElementById("inventoryLink");
         const reportsLink = document.getElementById("reportsLink");
@@ -155,6 +174,8 @@
           reportsLink.style.display = "none";
         }
       }
+      // Call the function to set visibility on page load
+      setNavLinksVisibility();
 
       function fetchAllCustomers() {
         fetch("/all_customer")

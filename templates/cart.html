@@ -16,30 +16,34 @@
             background-position: center;
         }
         .banner {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background-color: orange;
-            color: white;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-        }
-        .nav-links {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background-color: orange; /* Solid orange background */
+        color: white;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+        transition: transform 0.3s ease; /* Smooth transition */
+          }
+          .banner.hidden {
+            transform: translateY(-100%); /* Move the banner out of view */
+          }
+          .nav-links {
             display: flex;
             gap: 20px;
             padding-right: 20px;
             margin-left: auto;
-        }
-        .nav-links a {
+          }
+          .nav-links a {
             color: black;
             text-decoration: none;
-        }
-        .nav-links a:hover {
+          }
+          .nav-links a:hover {
             text-decoration: underline;
-        }
+          }
         .cart-container {
             margin-top: 60px; /* Adjust to avoid overlap with the banner */
             padding: 20px;
@@ -75,16 +79,16 @@
     </style>
 </head>
 <body>
-    <div class="banner">
-        <div class="nav-links">
-            <a href="/login">Login/Logout</a>
-            <a href="/search">Book Search</a>
-            <a href="/cart">Cart</a>
-            {% if auth_level != 'Customer' %}
-                <a href="/inventory" id="inventoryLink">Inventory</a>
-                <a href="/reports" id="reportsLink">Reports</a>
-            {% endif %}
-        </div>
+    <div class="toggle-button" onclick="toggleBanner()">☰</div>
+    <div class="banner" id="banner">
+      <div class="nav-links">
+        <a href="/login">Login/Logout</a>
+        <a href="/search">Book Search</a>
+        <a href="/cart" id="cartButton">Cart</a>
+        <a href="/inventory" id="inventoryLink">Inventory</a>
+        <a href="/reports" id="reportsLink">Reports</a>
+        <a href="/customers" id="customersLink">Customers</a>
+      </div>
     </div>
     <div class="cart-container">
         <h1>Your Cart</h1>
@@ -111,6 +115,30 @@
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const authLevel = "{{ auth_level }}";  // Pass the auth_level from Flask
     const username = "{{ username }}";  // Pass the username from Flask
+
+    // Function to toggle the banner visibility
+      function toggleBanner() {
+        const banner = document.getElementById("banner");
+        banner.classList.toggle("hidden");
+      }
+
+      // Function to set visibility of navigation links based on auth level
+      function setNavLinksVisibility() {
+        const inventoryLink = document.getElementById("inventoryLink");
+        const reportsLink = document.getElementById("reportsLink");
+        const customersLink = document.getElementById("customersLink");
+
+        if (authLevel !== "Supervisor" && authLevel !== "Employee") {
+          inventoryLink.style.display = "none";
+          customersLink.style.display = "none";
+        }
+        if (authLevel !== "Supervisor") {
+          reportsLink.style.display = "none";
+        }
+      }
+
+      // Call the function to set visibility on page load
+      setNavLinksVisibility();
 
     function displayCart() {
         const cartItems = document.getElementById('cartItems');

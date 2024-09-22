@@ -115,6 +115,7 @@
     </div>
 
     <script>
+      const authLevel = "{{ auth_level }}"; // Pass the auth_level from Flask
       function setNavLinksVisibility() {
         const inventoryLink = document.getElementById("inventoryLink");
         const reportsLink = document.getElementById("reportsLink");
@@ -128,6 +129,9 @@
           reportsLink.style.display = "none";
         }
       }
+
+      // Call the function to set visibility on page load
+      setNavLinksVisibility();
 
       function fetchAllInventory() {
         fetch("/all_inventory")
