@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Order Report</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0;
+        background-color: #f0f0f0;
+        background-image: url("{{url_for("static", filename="inventory.jfif")}}");
+        background-size: cover;
+        background-position: center;
+        font-family: Arial, sans-serif;
+      }
+
+      .banner {
+        width: 100%;
+        background-color: orange;
+        color: white;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .banner.hidden {
+        transform: translateY(-100%); /* Move the banner out of view */
+      }
+      .nav-links {
+        display: flex;
+        gap: 20px;
+        padding-right: 20px;
+        margin-left: auto;
+      }
+
+      .nav-links a {
+        color: black;
+        text-decoration: none;
+      }
+
+      .nav-links a:hover {
+        text-decoration: underline;
+      }
+      .toggle-button {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        cursor: pointer;
+        z-index: 1001; /* Ensure it stays above the banner */
+      }
+      .report-container {
+        margin-top: 20px;
+        width: 80%;
+        background-color: white;
+        padding: 20px;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table, th, td {
+        border: 1px solid #ddd;
+      }
+
+      th, td {
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      input[type="number"] {
+        width: 60px; /* Reduced width for OrderQty input */
+        box-sizing: border-box;
+      }
+
+      .place-order-button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+
+      .place-order-button:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toggle-button" onclick="toggleBanner()">☰</div>
+    <div class="banner" id="banner">
+      <div class="nav-links">
+        <a href="/login">Login/Logout</a>
+        <a href="/search">Book Search</a>
+        <a href="/cart" id="cartButton">Cart</a>
+        <a href="/inventory" id="inventoryLink">Inventory</a>
+        <a href="/reports" id="reportsLink">Reports</a>
+        <a href="/customers" id="customersLink">Customers</a>
+      </div>
+    </div>
+
+    <div class="report-container">
+      <h2>Stock Order Report</h2>
+      <div id="reportOutput">
+        <!-- Stock order report will be displayed here -->
+      </div>
+      <button class="place-order-button" onclick="placeOrder()">Place Order</button>
+    </div>
+
+    <script>
+    const authLevel = "{{ auth_level }}"; // Pass the auth_level from Flask
+
+      // Function to toggle the banner visibility
+      function toggleBanner() {
+        const banner = document.getElementById("banner");
+        banner.classList.toggle("hidden");
+      }
+
+      // Function to set visibility of navigation links based on auth level
+      function setNavLinksVisibility() {
+        const inventoryLink = document.getElementById("inventoryLink");
+        const reportsLink = document.getElementById("reportsLink");
+        const customersLink = document.getElementById("customersLink");
+
+        if (authLevel !== "Supervisor" && authLevel !== "Employee") {
+          inventoryLink.style.display = "none";
+          customersLink.style.display = "none";
+        }
+        if (authLevel !== "Supervisor") {
+          reportsLink.style.display = "none";
+        }
+      }
+
+      // Call the function to set visibility on page load
+      setNavLinksVisibility();
+
+      document.addEventListener("DOMContentLoaded", function() {
+        fetch("/fetch_special_order_report")
+          .then(response => response.json())
+          .then(data => {
+            displayReport(data);
+          })
+          .catch(error => {
+            document.getElementById("reportOutput").innerHTML = `<p>Error: ${error.message}</p>`;
+          });
+      });
+
+      function displayReport(data) {
+        const reportOutput = document.getElementById("reportOutput");
+        reportOutput.innerHTML = ""; // Clear previous report
+
+        if (data.success) {
+          // Create table to display report data
+          const table = document.createElement("table");
+
+          // Create table header
+          const thead = document.createElement("thead");
+          const headerRow = document.createElement("tr");
+
+          data.columns.forEach(col => {
+            const th = document.createElement("th");
+            th.innerText = col;
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          // Create table body with report data
+          const tbody = document.createElement("tbody");
+          data.rows.forEach(row => {
+            const tr = document.createElement("tr");
+            row.forEach((cell, index) => {
+              const td = document.createElement("td");
+
+              if (data.columns[index] === "OrderQty") {
+                const input = document.createElement("input");
+                input.type = "number";
+                input.value = cell;
+                input.addEventListener("input", function() {
+                  const cost = row[data.columns.indexOf("BookCost")];
+                  updateTotalCost(tr, parseFloat(input.value), parseFloat(cost));
+                });
+                td.appendChild(input);
+              } else if (data.columns[index] === "BookCost" || data.columns[index] === "TotalCost") {
+                td.innerText = `$${parseFloat(cell).toFixed(2)}`;
+              } else {
+                td.innerText = cell;
+              }
+
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+
+          // Append table to the output div
+          reportOutput.appendChild(table);
+        } else {
+          reportOutput.innerHTML = "No data available for the selected report.";
+        }
+      }
+
+      function updateTotalCost(row, orderQty, cost) {
+        console.log("Order Quantity:", orderQty);
+        console.log("Cost:", cost);
+
+        if (isNaN(orderQty) || isNaN(cost)) {
+          console.error("Invalid input: orderQty or cost is not a number");
+          return;
+        }
+
+        const totalCostCell = row.cells[row.cells.length - 1];
+        const totalCost = (orderQty * cost).toFixed(2);
+        totalCostCell.innerText = `$${totalCost}`;
+      }
+
+      function placeOrder() {
+        const rows = document.querySelectorAll("tbody tr");
+        const orderData = [];
+
+        rows.forEach(row => {
+          const cells = row.querySelectorAll("td");
+          const order = {
+            ID: cells[0].innerText,
+            orderQty: cells[6].querySelector("input").value,
+            totalCost: cells[7].innerText
+          };
+          orderData.push(order);
+        });
+
+        fetch("/place_special_order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(orderData)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert("Order placed successfully!");
+            window.location.href = "/search";
+          } else {
+            alert("Failed to place order.");
+          }
+        })
+        .catch(error => {
+          alert("Error: " + error.message);
+        });
+      }
+    </script>
+
+  </body>
+</html>

@@ -358,6 +358,12 @@ def reports():
 def stock_order_reports():
     auth_level = session.get('auth_level')
     return render_template('stock_order_report.html', auth_level=auth_level)
+
+@app.route('/special_order_report')
+def special_order_reports():
+    auth_level = session.get('auth_level')
+    return render_template('special_order_report.html', auth_level=auth_level)
+
 # Path to the database
 DB_PATH = 'CTUTeamProject.db'
 
@@ -401,11 +407,65 @@ def fetch_stock_order_report():
 
     return jsonify(data)
 
+@app.route('/fetch_special_order_report')
+def fetch_special_order_report():
+    conn = connect_db()
+    query = '''
+    SELECT 
+        BookInfo.ID, 
+        BookInfo.Title, 
+        BookInventory.OnHandQty, 
+        BookInventory.StockMin, 
+        BookInventory.StockMax, 
+        BookInfo.Cost as BookCost, 
+        (0 - BookInventory.OnHandQty) as OrderQty, 
+        (0 - BookInventory.OnHandQty) * BookInfo.Cost as TotalCost
+    FROM 
+        BookInventory
+    JOIN 
+        BookInfo ON BookInventory.BookInfoID = BookInfo.ID
+    WHERE 
+        BookInventory.OnHandQty < 0
+    '''
+    cursor = conn.execute(query)
+    rows = cursor.fetchall()
+    columns = [description[0] for description in cursor.description]
+    conn.close()
+
+    if rows:
+        data = {
+            "success": True,
+            "columns": columns,
+            "rows": [tuple(row) for row in rows]
+        }
+    else:
+        data = {
+            "success": False,
+            "message": "No data available"
+        }
+
+    return jsonify(data)
+
 #Function to create Stock Order
 @app.route('/place_order', methods=['POST'])
 def place_order():
     order_data = request.json
-    order_id = ''.join(random.choices(string.digits, k=10)) + '.txt'
+    order_id = 'WO' + ''.join(random.choices(string.digits, k=10)) + '.txt'
+    order_path = os.path.join('orders', order_id)
+
+    if not os.path.exists('orders'):
+        os.makedirs('orders')
+
+    with open(order_path, 'w') as file:
+        for item in order_data:
+            file.write(f"ID: {item['ID']}, OrderQty: {item['orderQty']}, TotalCost: {item['totalCost']}\n")
+
+    return jsonify({"success": True, "order_id": order_id})
+
+@app.route('/place_special_order', methods=['POST'])
+def place_special_order():
+    order_data = request.json
+    order_id = 'SO' + ''.join(random.choices(string.digits, k=10)) + '.txt'
     order_path = os.path.join('orders', order_id)
 
     if not os.path.exists('orders'):

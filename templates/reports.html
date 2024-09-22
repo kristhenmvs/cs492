@@ -185,6 +185,8 @@
             .then((data) => {
               if (reportType === "stockorder") {
                 window.location.href = "/stock_order_report";
+              } else if (reportType === "specialorder") {
+                window.location.href = "/special_order_report";
               } else {
                 displayReport(data);
               }
