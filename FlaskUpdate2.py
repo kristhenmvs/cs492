@@ -16,6 +16,7 @@ import logging
 import string
 import os
 import random
+import shutil
 from datetime import datetime
 
 # Configure logging
@@ -569,10 +570,26 @@ if __name__ == '__main__':
     time.sleep(2)
 
     # Path to the Chrome executable
-    chrome_path = 'C:/Program Files/Google/Chrome/Application/chrome.exe %s'
+    chrome_paths = [
+        'C:/Program Files/Google/Chrome/Application/chrome.exe',
+        'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+        'C:/Users/{}/AppData/Local/Google/Chrome/Application/chrome.exe'.format(os.getlogin())
+    ]
 
-    # Open the local webpage in Chrome
-    webbrowser.get(chrome_path).open_new_tab('http://127.0.0.1:5000/login')
+    # Find the Chrome executable
+    chrome_path = None
+    for path in chrome_paths:
+        if shutil.which(path):
+            chrome_path = path
+            break
+
+    if chrome_path:
+        # Register the new browser type
+        webbrowser.register('chrome', None, webbrowser.BackgroundBrowser(chrome_path))
+        # Open the local webpage in Chrome
+        webbrowser.get('chrome').open_new_tab('http://127.0.0.1:5000/login')
+    else:
+        print("Chrome executable not found in common paths.")
 
 
 
