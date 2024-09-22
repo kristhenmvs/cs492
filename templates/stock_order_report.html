@@ -104,9 +104,10 @@
       <div class="nav-links">
         <a href="/login">Login/Logout</a>
         <a href="/search">Book Search</a>
-        <a href="/cart">Cart</a>
+        <a href="/cart" id="cartButton">Cart</a>
         <a href="/inventory" id="inventoryLink">Inventory</a>
         <a href="/reports" id="reportsLink">Reports</a>
+        <a href="/customers" id="customersLink">Customers</a>
       </div>
     </div>
 
@@ -131,9 +132,11 @@
       function setNavLinksVisibility() {
         const inventoryLink = document.getElementById("inventoryLink");
         const reportsLink = document.getElementById("reportsLink");
+        const customersLink = document.getElementById("customersLink");
 
         if (authLevel !== "Supervisor" && authLevel !== "Employee") {
           inventoryLink.style.display = "none";
+          customersLink.style.display = "none";
         }
         if (authLevel !== "Supervisor") {
           reportsLink.style.display = "none";
@@ -180,17 +183,22 @@
             const tr = document.createElement("tr");
             row.forEach((cell, index) => {
               const td = document.createElement("td");
+
               if (data.columns[index] === "OrderQty") {
                 const input = document.createElement("input");
                 input.type = "number";
                 input.value = cell;
                 input.addEventListener("input", function() {
-                  updateTotalCost(tr, input.value, row[data.columns.indexOf("Cost")]);
+                  const cost = row[data.columns.indexOf("BookCost")];
+                  updateTotalCost(tr, parseFloat(input.value), parseFloat(cost));
                 });
                 td.appendChild(input);
+              } else if (data.columns[index] === "BookCost" || data.columns[index] === "TotalCost") {
+                td.innerText = `$${parseFloat(cell).toFixed(2)}`;
               } else {
                 td.innerText = cell;
               }
+
               tr.appendChild(td);
             });
             tbody.appendChild(tr);
@@ -205,9 +213,17 @@
       }
 
       function updateTotalCost(row, orderQty, cost) {
+        console.log("Order Quantity:", orderQty);
+        console.log("Cost:", cost);
+
+        if (isNaN(orderQty) || isNaN(cost)) {
+          console.error("Invalid input: orderQty or cost is not a number");
+          return;
+        }
+
         const totalCostCell = row.cells[row.cells.length - 1];
         const totalCost = (orderQty * cost).toFixed(2);
-        totalCostCell.innerText = totalCost;
+        totalCostCell.innerText = `$${totalCost}`;
       }
 
       function placeOrder() {

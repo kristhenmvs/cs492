@@ -371,9 +371,9 @@ def fetch_stock_order_report():
         BookInventory.OnHandQty, 
         BookInventory.StockMin, 
         BookInventory.StockMax, 
-        printf('$%.2f', BookInfo.Cost) as BookCost, 
+        BookInfo.Cost as BookCost, 
         (BookInventory.StockMax - BookInventory.OnHandQty) as OrderQty, 
-        printf('$%.2f', (BookInventory.StockMax - BookInventory.OnHandQty) * BookInfo.Cost) as TotalCost
+        (BookInventory.StockMax - BookInventory.OnHandQty) * BookInfo.Cost as TotalCost
     FROM 
         BookInventory
     JOIN 
