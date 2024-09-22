@@ -6,7 +6,7 @@
 
 """
 
-from flask import Flask, request, render_template, redirect, session, jsonify
+from flask import Flask, request, render_template, render_template_string, redirect, session, jsonify
 import sqlite3
 from flask_session import Session
 import webbrowser
@@ -41,7 +41,8 @@ def connect_db():
 @app.route('/inventory')
 def inventory():
     auth_level = session.get('auth_level', 'Customer')
-    return render_template('inventory.html',auth_level=auth_level)
+    username = session['username']
+    return render_template('inventory.html',auth_level=auth_level, username=username)
 
 
 @app.route('/all_inventory')
@@ -53,6 +54,69 @@ def all_inventory():
     rows = cursor.fetchall()
     conn.close()
     return render_template('inventory_list.html', books=rows)
+
+
+@app.route('/postStockOrder')
+def post_stock_order():
+    auth_level = session['auth_level']
+    orders_folder = './orders'
+    files = os.listdir(orders_folder)
+    files_html = ''.join([f'<div><button onclick="selectFile(\'{file}\')">Select</button> {file}</div>' for file in files])
+    return render_template_string(files_html, auth_level=auth_level)
+
+@app.route('/selectFile/<filename>')
+def select_file(filename):
+    orders_folder = './orders'
+    file_path = os.path.join(orders_folder, filename)
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            data = file.read()
+            session['filename'] = filename
+        return jsonify({"data": data})
+    else:
+        return jsonify({"error": "File not found"}), 404
+
+
+@app.route('/update_orders', methods=['POST'])
+def update_orders():
+    data = request.json
+    filename = session.get('filename')
+    orders = data.get('orders',[])
+    user_id = session.get('username')
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        for order in orders:
+            book_id = order['id']
+            order_qty = int(order['orderQty'])
+            posted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            logging.warning(book_id, order_qty, filename, posted_date, user_id, book_id, order_qty)
+            cursor.execute("""
+                UPDATE BookInventory
+                SET OnHandQty = OnHandQty + ?
+                WHERE BookInfoID = ?
+            """, (order_qty, book_id))
+
+            # Insert BookID and OrderQty into PostedOrders table
+
+            cursor.execute("""
+                INSERT INTO PostedOrders (PostedOrder, PostedDate, PostedBy, BookID, OrderQty)
+                VALUES (?, ?, ?, ?, ?)
+            """, (filename, posted_date, user_id, book_id, order_qty))
+
+        # Delete the order file
+        orders_folder = './orders'
+        file_path = os.path.join(orders_folder, filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        conn.commit()
+        return jsonify({"message": "Orders updated and file deleted successfully"})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route('/selected_inventory')

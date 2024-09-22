@@ -69,30 +69,28 @@
         width: 100%;
         max-width: 900px;
       }
-      .inventory-item {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start; /* Align items to the start (left) */
-        padding: 10px;
-        border-bottom: 1px solid #ccc;
+      table {
         width: 100%;
+        border-collapse: collapse;
       }
-      .book-title {
-        font-weight: bold;
-        margin-bottom: 5px;
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
       }
-      .book-details {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
+      th {
+        background-color: #f2f2f2;
       }
-      .book-details p {
-        margin: 0;
-      }
-      .inventory-item input {
+      input[type="number"] {
         width: 60px;
-        padding: 5px;
-        font-size: 14px;
+      }
+      .post-button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: none; /* Initially hidden */
       }
     </style>
   </head>
@@ -111,7 +109,9 @@
       <h1>Inventory</h1>
       <button onclick="fetchAllInventory()">All Inventory</button>
       <button onclick="fetchSelectedInventory()">Selected Inventory</button>
+      <button onclick="postStockOrder()">Post Received Orders</button>
       <div class="inventory-list" id="inventoryList"></div>
+      <button class="post-button" id="postButton" onclick="postOrder()">Post</button>
     </div>
 
     <script>
@@ -144,6 +144,44 @@
               "inventoryList"
             ).innerHTML = `<p>Error: ${error.message}</p>`;
           });
+      }
+
+      function postStockOrder() {
+        fetch("/postStockOrder")
+            .then((response) => response.text())
+            .then((data) => {
+                document.getElementById("inventoryList").innerHTML = data;
+                document.getElementById("postButton").style.display = "block"; // Show the Post button
+            })
+            .catch((error) => {
+                document.getElementById("inventoryList").innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+      }
+
+      function selectFile(filename) {
+        fetch(`/selectFile/${filename}`)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.error) {
+                    document.getElementById("inventoryList").innerHTML = `<p>Error: ${data.error}</p>`;
+                } else {
+                    document.getElementById("inventoryList").innerHTML = formatData(data.data);
+                }
+            })
+            .catch((error) => {
+                document.getElementById("inventoryList").innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+      }
+
+      function formatData(data) {
+          const rows = data.split('\n').filter(row => row.trim() !== '');
+          let formattedData = '<table><tr><th>ID</th><th>OrderQty</th><th>TotalCost</th></tr>';
+          rows.forEach(row => {
+              const [id, orderQty, totalCost] = row.split(', ').map(item => item.split(': ')[1]);
+              formattedData += `<tr><td>${id}</td><td><input type="number" value="${orderQty}" /></td><td>${totalCost}</td></tr>`;
+          });
+          formattedData += '</table>';
+          return formattedData;
       }
 
       function fetchSelectedInventory() {
@@ -188,6 +226,41 @@
             alert(`Error: ${error.message}`);
           });
       }
+
+      function postOrder() {
+        const rows = document.querySelectorAll("table tr");
+        const orderData = [];
+        const filename = document.querySelector("#inventoryList").dataset.filename;
+        const user_id = "{{ username }}";  // Pass the user_id from Flask
+
+        rows.forEach((row, index) => {
+            if (index > 0) { // Skip header row
+                const cells = row.querySelectorAll("td");
+                const id = cells[0].innerText;
+                const orderQty = cells[1].querySelector("input").value;
+                const totalCost = cells[2].innerText;
+                orderData.push({ id, orderQty, totalCost });
+            }
+        });
+
+        const payload = { filename, user_id, orders: orderData };  // Structure the payload correctly
+
+      fetch('/update_orders', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),  // Send the payload
+      })
+      .then(response => response.json())
+      .then(data => {
+          alert(data.message);
+          document.getElementById("postButton").style.display = "none"; // Hide the Post button after posting
+      })
+      .catch(error => {
+          alert(`Error: ${error.message}`);
+      });
+    }
     </script>
   </body>
 </html>
