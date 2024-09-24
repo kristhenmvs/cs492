@@ -13,10 +13,15 @@
             background-size: cover;
             background-position: center;
         }
-        table {
-            border-collapse: collapse;
+        .table-container {
+            height: 70vh; /* Adjust the height as needed */
+            overflow-y: auto;
             width: 90%;
             margin: 30px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
         }
         th, td {
             border: 1px solid black;
@@ -41,39 +46,41 @@
 </head>
 <body>
     <h1>Book List</h1>
-    <table>
-        <tr>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Release Date</th>
-            <th>ID</th>
-            <th>Shelf Location</th>
-            <th>On Hand</th>
-            <th>Sale Price</th>
-            <th>Action</th>
-        </tr>
-        {% for book in books %}
-        <tr>
-            <td>{{ book.Title }}</td>
-            <td>{{ book.Author }}</td>
-            <td>{{ book['ReleaseDate'] }}</td>
-            <td>{{ book.ID }}</td>
-            <td>{{ book['AisleLoc'] }} {{ book['ShelfLoc'] }}</td>
-            <td>{{ book['OnHandQty'] }}</td>
-            <td>{{ book.SalePrice | currency }}</td>
-            <td>
-     {% if book['OnHandQty'] > 0 %}
-    <button class="sell-button" data-bookid="{{ book.id }}">
-        {{ 'Purchase' if auth_level == 'Customer' else 'Sell' }}
-    </button>
-    {% else %}
-    <button class="sell-button" data-bookid="{{ book.id }}">
-        Order
-    </button>
-    {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+    <div class="table-container">
+        <table>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Release Date</th>
+                <th>ID</th>
+                <th>Shelf Location</th>
+                <th>On Hand</th>
+                <th>Sale Price</th>
+                <th>Action</th>
+            </tr>
+            {% for book in books %}
+            <tr>
+                <td>{{ book.Title }}</td>
+                <td>{{ book.Author }}</td>
+                <td>{{ book['ReleaseDate'] }}</td>
+                <td>{{ book.ID }}</td>
+                <td>{{ book['AisleLoc'] }} {{ book['ShelfLoc'] }}</td>
+                <td>{{ book['OnHandQty'] }}</td>
+                <td>{{ book.SalePrice | currency }}</td>
+                <td>
+                    {% if book['OnHandQty'] > 0 %}
+                    <button class="sell-button" data-bookid="{{ book.id }}">
+                        {{ 'Purchase' if auth_level == 'Customer' else 'Sell' }}
+                    </button>
+                    {% else %}
+                    <button class="sell-button" data-bookid="{{ book.id }}">
+                        Order
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </body>
 </html>

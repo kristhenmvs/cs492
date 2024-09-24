@@ -150,7 +150,8 @@
         fetch("/postStockOrder")
             .then((response) => response.text())
             .then((data) => {
-                document.getElementById("inventoryList").innerHTML = data;
+                const filenames = data.split('\n').map(file => file.replace('.txt', ''));
+                document.getElementById("inventoryList").innerHTML = filenames.join('<br>');
                 document.getElementById("postButton").style.display = "block"; // Show the Post button
             })
             .catch((error) => {
@@ -159,18 +160,19 @@
       }
 
       function selectFile(filename) {
-        fetch(`/selectFile/${filename}`)
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.error) {
-                    document.getElementById("inventoryList").innerHTML = `<p>Error: ${data.error}</p>`;
-                } else {
-                    document.getElementById("inventoryList").innerHTML = formatData(data.data);
-                }
-            })
-            .catch((error) => {
-                document.getElementById("inventoryList").innerHTML = `<p>Error: ${error.message}</p>`;
-            });
+          fetch(`/selectFile/${filename}`)
+              .then((response) => response.json())
+              .then((data) => {
+                  if (data.error) {
+                      document.getElementById("inventoryList").innerHTML = `<p>Error: ${data.error}</p>`;
+                  } else {
+                      const formattedData = formatData(data.data);
+                      document.getElementById("inventoryList").innerHTML = formattedData;
+                  }
+              })
+              .catch((error) => {
+                  document.getElementById("inventoryList").innerHTML = `<p>Error: ${error.message}</p>`;
+              });
       }
 
       function formatData(data) {

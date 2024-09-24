@@ -61,17 +61,20 @@ def post_stock_order():
     auth_level = session['auth_level']
     orders_folder = './orders'
     files = os.listdir(orders_folder)
+    # Remove .txt extension from filenames
+    files = [file.replace('.txt', '') for file in files]
     files_html = ''.join([f'<div><button onclick="selectFile(\'{file}\')">Select</button> {file}</div>' for file in files])
     return render_template_string(files_html, auth_level=auth_level)
 
 @app.route('/selectFile/<filename>')
 def select_file(filename):
     orders_folder = './orders'
-    file_path = os.path.join(orders_folder, filename)
+    # Add the .txt extension back to the filename
+    file_path = os.path.join(orders_folder, f"{filename}.txt")
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
             data = file.read()
-            session['filename'] = filename
+            session['filename'] = f"{filename}.txt"
         return jsonify({"data": data})
     else:
         return jsonify({"error": "File not found"}), 404
