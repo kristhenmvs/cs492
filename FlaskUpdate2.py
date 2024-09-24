@@ -155,11 +155,11 @@ def save_inventory():
         prior_stock_min = current_values['StockMin']
         prior_stock_max = current_values['StockMax']
         prior_on_hand_qty = current_values['OnHandQty']
-
+        today = datetime.today().strftime('%Y-%m-%d')  # Get today's date
         # Insert a new record into InventoryAdjustments
-        insert_query = "INSERT INTO InventoryAdjustments (BookInfoID, PriorMin, PriorMax, PriorOh, NewMin, NewMax, User) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        insert_query = "INSERT INTO InventoryAdjustments (BookInfoID, PriorMin, PriorMax, PriorOh, NewMin, NewMax, User, UpdateDate, NewOh ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-        cursor.execute(insert_query, (book_id, prior_stock_min, prior_stock_max, prior_on_hand_qty, new_stock_min, new_stock_max, username))
+        cursor.execute(insert_query, (book_id, prior_stock_min, prior_stock_max, prior_on_hand_qty, new_stock_min, new_stock_max, username, today,new_on_hand_qty))
 
         # Update the BookInventory table
         update_query = "UPDATE BookInventory SET StockMin = ?, StockMax = ?, OnHandQty = ? WHERE BookInfoID = ?"
