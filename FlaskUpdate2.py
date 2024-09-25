@@ -251,6 +251,8 @@ def check_login():
             return render_template('success.html', username=username, firstname=firstname, auth_level=auth_level)
         else:
             return render_template('success.html', username=username)
+    else:
+        return render_template('error.html', message="Invalid username or password")
 @app.route('/search')
 def search():
     if 'username' in session and 'auth_level' in session:
