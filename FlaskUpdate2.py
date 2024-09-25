@@ -223,24 +223,6 @@ def check_login():
 
     conn = connect_db()
     cursor = conn.cursor()
-    """
-    logging.warning(f"Username: {username}")
-    query = "SELECT First_Name FROM CustomerInfo Inner Join LogInfo on CustomerInfo.Email_Add = LogInfo.UserEmail WHERE  LogInfo.UserNm = ? AND LogInfo.PsWrd = ?"
-    cursor.execute(query, (username, password))
-    user = cursor.fetchone()
-    conn.close()
-    username = session ['username']
-    auth_level = session
-
-    logging.warning(f"Username: {user[0]}")
-    if user:
-
-        return f'Welcome {user[0]}'
-
-    else :
-        return 'Welcome UserNm'
-
-    """
     # Query to check if the provided username and password match
     query = "SELECT * FROM LogInfo WHERE UserNm = ? AND PsWrd = ?"
     cursor.execute(query, (username, password))
