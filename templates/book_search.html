@@ -107,7 +107,11 @@
       </div>
     </div>
     <div class="search-container" style="position: relative">
-      <h1>Welcome {{username}}, Search for a Book</h1>
+      {% if auth_level == 'Customer' %}
+            <h1>Welcome {{ firstname }}! Search For a Book</h1>
+        {% else %}
+            <h1>Welcome {{ username }}! Search For a Book</h1>
+        {% endif %}
       <form id="searchForm">
         <label for="title">Title:</label>
         <input type="text" id="title" name="title" />

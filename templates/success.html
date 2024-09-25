@@ -35,7 +35,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>Welcome {{ username }}!</h1>
+        {% if auth_level == 'Customer' %}
+            <h1>Welcome {{ firstname }}!</h1>
+        {% else %}
+            <h1>Welcome {{ username }}!</h1>
+        {% endif %}
         <p>You have successfully logged in.</p>
         <p>Redirecting to the book search page in 3 seconds...</p>
     </div>

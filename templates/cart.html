@@ -115,6 +115,7 @@
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const authLevel = "{{ auth_level }}";  // Pass the auth_level from Flask
     const username = "{{ username }}";  // Pass the username from Flask
+    const firstname = "{{ firstname }}";
 
     // Function to toggle the banner visibility
       function toggleBanner() {
@@ -158,7 +159,7 @@
     function displayCustomerInfo() {
         const customerInfo = document.getElementById('customerInfo');
         if (authLevel === 'Customer') {
-            customerInfo.innerHTML = `<p>Customer: ${username}</p>`;
+            customerInfo.innerHTML = `<p>Customer: ${firstname}</p>`;
         } else if (authLevel === 'Employee' || authLevel === 'Supervisor') {
             customerInfo.innerHTML = `
                 <label for="customerCode">Customer Code:</label>

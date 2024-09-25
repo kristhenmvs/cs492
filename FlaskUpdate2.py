@@ -246,8 +246,9 @@ def check_login():
         if session.get('auth_level') == 'Customer':
             logging.warning(f"Username test 4: {user[0]}")
             session['firstname'] = user[0]
-            firstname = user[0]
-            return render_template('success.html', username=username, firstname=firstname)
+            firstname = session['firstname']
+            auth_level = session['auth_level']
+            return render_template('success.html', username=username, firstname=firstname, auth_level=auth_level)
         else:
             return render_template('success.html', username=username)
 @app.route('/search')
@@ -255,7 +256,11 @@ def search():
     if 'username' in session and 'auth_level' in session:
         username = session['username']
         auth_level = session['auth_level']
-        return render_template('book_search.html', username=username, auth_level=auth_level)
+        if auth_level == 'Customer':
+            firstname = session['firstname']
+            return render_template('book_search.html', username=username, auth_level=auth_level, firstname=firstname)
+        else:
+            return render_template('book_search.html', username=username, auth_level=auth_level)
     else:
         return redirect('/login')
 
@@ -270,7 +275,11 @@ def cart():
     if 'username' in session and 'auth_level' in session:
         username = session['username']
         auth_level = session['auth_level']
-        return render_template('cart.html', username=username, auth_level=auth_level)
+        if auth_level == 'Customer':
+            firstname = session['firstname']
+            return render_template('cart.html', username=username, auth_level=auth_level, firstname=firstname)
+        else:
+            return render_template('cart.html', username=username, auth_level=auth_level)
     else:
         return redirect('/login')
 
