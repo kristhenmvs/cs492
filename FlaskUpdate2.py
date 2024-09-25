@@ -223,12 +223,29 @@ def check_login():
 
     conn = connect_db()
     cursor = conn.cursor()
+    """
+    logging.warning(f"Username: {username}")
+    query = "SELECT First_Name FROM CustomerInfo Inner Join LogInfo on CustomerInfo.Email_Add = LogInfo.UserEmail WHERE  LogInfo.UserNm = ? AND LogInfo.PsWrd = ?"
+    cursor.execute(query, (username, password))
+    user = cursor.fetchone()
+    conn.close()
+    username = session ['username']
+    auth_level = session
 
+    logging.warning(f"Username: {user[0]}")
+    if user:
+
+        return f'Welcome {user[0]}'
+
+    else :
+        return 'Welcome UserNm'
+
+    """
     # Query to check if the provided username and password match
     query = "SELECT * FROM LogInfo WHERE UserNm = ? AND PsWrd = ?"
     cursor.execute(query, (username, password))
     user = cursor.fetchone()
-    conn.close()
+    # conn.close()
 
     logging.debug(f"User fetched from database: {user}")
 
@@ -236,11 +253,21 @@ def check_login():
         session['username'] = username
         session['auth_level'] = user[4]
         logging.warning(f"Username: {user[0]}, Auth Level: {user[4]}")
-        return render_template('success.html', username=username)
-    else:
-        return render_template('error.html', message="Invalid username or password")
+        logging.warning(f"Username: {username}")
+        if session.get('auth_level') == 'Customer':
+            query = "SELECT First_Name FROM CustomerInfo Inner Join LogInfo on CustomerInfo.Email_Add = LogInfo.UserEmail WHERE  LogInfo.UserNm = ? AND LogInfo.PsWrd = ?"
+            cursor.execute(query, (username, password))
+            user = cursor.fetchone()
+            logging.warning(f"Username: {user[0]}")
 
-
+        conn.close()
+        if session.get('auth_level') == 'Customer':
+            logging.warning(f"Username test 4: {user[0]}")
+            session['firstname'] = user[0]
+            firstname = user[0]
+            return render_template('success.html', username=username, firstname=firstname)
+        else:
+            return render_template('success.html', username=username)
 @app.route('/search')
 def search():
     if 'username' in session and 'auth_level' in session:
