@@ -40,9 +40,14 @@ def connect_db():
 
 @app.route('/inventory')
 def inventory():
-    auth_level = session.get('auth_level', 'Customer')
-    username = session['username']
-    return render_template('inventory.html',auth_level=auth_level, username=username)
+
+    if 'username' in session and 'auth_level' in session:
+        username = session['username']
+        auth_level = session['auth_level']
+        return render_template('inventory.html', username=username, auth_level=auth_level)
+    else:
+        return redirect('/login')
+    
 
 
 @app.route('/all_inventory')
@@ -173,9 +178,6 @@ def save_inventory():
         return {'message': 'Book not found'}
 
 
-
-
-
 # Route to look up a book by title, author, or ID
 @app.route('/lookup_book', methods=['GET'])
 def lookup_book():
@@ -251,6 +253,7 @@ def search():
 
 @app.route('/login')
 def login_form():
+    session.clear()
     return render_template('login.html')
 
 @app.route('/cart')
@@ -344,7 +347,14 @@ def checkout():
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+
+    if 'username' in session and 'auth_level' in session:
+        username = session['username']
+        auth_level = session['auth_level']
+        return render_template('index.html', username=username, auth_level=auth_level)
+    else:
+        return redirect('/login')
+    
 
 @app.route('/checkout_success')
 def checkout_success():
@@ -417,8 +427,14 @@ def save_registration():
 
 @app.route('/reports')
 def reports():
-    auth_level = session.get('auth_level')
-    return render_template('reports.html', auth_level=auth_level)
+
+    if 'username' in session and 'auth_level' in session:
+        username = session['username']
+        auth_level = session['auth_level']
+        return render_template('reports.html', username=username, auth_level=auth_level)
+    else:
+        return redirect('/login')
+    
 
 # Inventory Stock Ordering
 @app.route('/stock_order_report')
@@ -587,8 +603,12 @@ def generate_report():
     
 @app.route('/customers')
 def customers():
-    auth_level = session['auth_level']
-    return render_template('customers.html', auth_level=auth_level)
+    if 'username' in session and 'auth_level' in session:
+        username = session['username']
+        auth_level = session['auth_level']
+        return render_template('customers.html', username=username, auth_level=auth_level)
+    else:
+        return redirect('/login')
 
 
 @app.route('/all_customer')
