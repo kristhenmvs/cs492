@@ -289,6 +289,27 @@ def cart():
 
 from datetime import datetime
 
+@app.route('/lookup_customer', methods=['GET'])
+def lookup_customer():
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    query = "SELECT Id, First_Name, Last_Name, Email_add FROM CustomerInfo"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    conn.close()
+
+    customers = []
+    for row in rows:
+        customers.append({
+            'Id': row[0],
+            'First_Name': row[1],
+            'LastName': row[2],
+            'Email_add': row[3]
+        })
+
+    return jsonify({'customers': customers})
+
 @app.route('/checkout', methods=['POST'])
 def checkout():
     try:
