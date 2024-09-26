@@ -111,10 +111,10 @@
     </div>
     <div class="search-container" style="position: relative">
       {% if auth_level == 'Customer' %}
-            <h1>Welcome {{ firstname }}! Search For a Book</h1>
-        {% else %}
-            <h1>Welcome {{ username }}! Search For a Book</h1>
-        {% endif %}
+      <h1>Welcome {{ firstname }}! Search For a Book</h1>
+      {% else %}
+      <h1>Welcome {{ username }}! Search For a Book</h1>
+      {% endif %}
       <form id="searchForm">
         <label for="title">Title:</label>
         <input type="text" id="title" name="title" />
@@ -135,7 +135,7 @@
 
     <script>
       const authLevel = "{{ auth_level }}"; // Pass the auth_level from Flask
-      const cart = []; // Array to store cart items
+      const cart = JSON.parse(localStorage.getItem("cart")) || []; // Array to store cart items
 
       // Function to toggle the banner visibility
       function toggleBanner() {

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            background-image: url("{{ url_for("static", filename="mgmt.jfif") }}");
+            background-size: cover;
+            background-position: center;
+        }
+        .banner {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: orange;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .banner.hidden {
+            transform: translateY(-100%);
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            padding-right: 20px;
+            margin-left: auto;
+        }
+        .nav-links a {
+            color: black;
+            text-decoration: none;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .toggle-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .container {
+            width: 80%;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .edit-button, .save-button {
+            cursor: pointer;
+            color: blue;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="toggle-button" onclick="toggleBanner()">☰</div>
+    <div class="banner" id="banner">
+        <div class="nav-links">
+            <a href="/login">Login/Logout</a>
+            <a href="/search">Book Search</a>
+            <a href="/cart" id="cartButton">Cart</a>
+            <a href="/inventory" id="inventoryLink">Inventory</a>
+            <a href="/reports" id="reportsLink">Reports</a>
+            <a href="/customers" id="customersLink">Customers</a>
+        </div>
+    </div>
+    <div class="container">
+        <h1>Employee Management</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Auth Level</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="employee-list">
+                <!-- Employee data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        const authLevel = "{{ auth_level }}"; // Pass the auth_level from Flask
+
+        function toggleBanner() {
+            const banner = document.getElementById("banner");
+            banner.classList.toggle("hidden");
+        }
+
+        function setNavLinksVisibility() {
+            const inventoryLink = document.getElementById("inventoryLink");
+            const reportsLink = document.getElementById("reportsLink");
+            const customersLink = document.getElementById("customersLink");
+
+            if (authLevel !== "Supervisor" && authLevel !== "Employee") {
+                inventoryLink.style.display = "none";
+                customersLink.style.display = "none";
+            }
+            if (authLevel !== "Supervisor") {
+                reportsLink.style.display = "none";
+            }
+        }
+
+        setNavLinksVisibility();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            let url = "/employees";
+            const params = [];
+            url += params.length ? '?' + params.join('&') : '';
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const employeeList = document.getElementById('employee-list');
+                    data.forEach(employee => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${employee.id}</td>
+                            <td><input type="text" value="${employee.name}" id="name-${employee.id}" disabled></td>
+                            <td><input type="email" value="${employee.email}" id="email-${employee.id}" disabled></td>
+                            <td>
+                                <select id="auth-${employee.id}" disabled>
+                                    <option value="Supervisor" ${employee.auth_level === 'Supervisor' ? 'selected' : ''}>Supervisor</option>
+                                    <option value="Employee" ${employee.auth_level === 'Employee' ? 'selected' : ''}>Employee</option>
+                                </select>
+                            </td>
+                            <td>
+                                <span class="edit-button" onclick="editEmployee(${employee.id})">Edit</span>
+                                <span class="save-button" onclick="saveEmployee(${employee.id})" style="display:none;">Save</span>
+                            </td>
+                        `;
+                        employeeList.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    document.getElementById('employee-list').innerHTML = `<tr><td colspan="5">Error: ${error.message}</td></tr>`;
+                });
+        });
+
+        function editEmployee(id) {
+            document.getElementById(`name-${id}`).disabled = false;
+            document.getElementById(`email-${id}`).disabled = false;
+            document.getElementById(`auth-${id}`).disabled = false;
+            document.querySelector(`.edit-button[onclick="editEmployee(${id})"]`).style.display = 'none';
+            document.querySelector(`.save-button[onclick="saveEmployee(${id})"]`).style.display = 'inline';
+        }
+
+        function saveEmployee(id) {
+            const name = document.getElementById(`name-${id}`).value;
+            const email = document.getElementById(`email-${id}`).value;
+            const authLevel = document.getElementById(`auth-${id}`).value;
+
+            fetch(`/update_employee/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, email, auth_level: authLevel })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`name-${id}`).disabled = true;
+                    document.getElementById(`email-${id}`).disabled = true;
+                    document.getElementById(`auth-${id}`).disabled = true;
+                    document.querySelector(`.edit-button[onclick="editEmployee(${id})"]`).style.display = 'inline';
+                    document.querySelector(`.save-button[onclick="saveEmployee(${id})"]`).style.display = 'none';
+                } else {
+                    alert('Error updating employee');
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

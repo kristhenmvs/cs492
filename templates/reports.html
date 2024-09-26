@@ -129,7 +129,7 @@
 
     <div class="report-container">
       <div id="selreptype">
-        <h2>Select Sales Report Type</h2>
+        <h2>Select Report Type</h2>
         <label for="reportType">Choose a report:</label>
         <select id="reportType" name="reportType">
           <option value="" disabled selected>Select a report type</option>
@@ -137,6 +137,7 @@
           <option value="customer">Sales by Customer</option>
           <option value="stockorder">Stock Order</option>
           <option value="specialorder">Special Orders</option>
+          <option value="employeemgt">Employee Management</option>
         </select>
         <button type="button" id="genReport" onclick="generateReport()">
           Generate Report
@@ -189,6 +190,8 @@
                 window.location.href = "/stock_order_report";
               } else if (reportType === "specialorder") {
                 window.location.href = "/special_order_report";
+              } else if (reportType === "employeemgt") {
+                window.location.href = "/employee_management";
               } else {
                 displayReport(data);
               }

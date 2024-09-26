@@ -485,6 +485,48 @@ def stock_order_reports():
     auth_level = session.get('auth_level')
     return render_template('stock_order_report.html', auth_level=auth_level)
 
+@app.route('/employee_management')
+def employee_management():
+    auth_level = session.get('auth_level')
+    return render_template('employee_management.html', auth_level=auth_level)
+
+@app.route('/employees', methods=['GET'])
+def employees():
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    query = "SELECT UserId, UserNm, UserEmail , AuthLevel FROM LogInfo WHERE AuthLevel != 'Customer'"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    conn.close()
+
+    employees = []
+    for row in rows:
+        employees.append({
+            'id': row[0],
+            'name': row[1],
+            'email': row[2],
+            'auth_level': row[3]
+        })
+
+    return jsonify(employees)
+
+@app.route('/update_employee/<int:id>', methods=['POST'])
+def update_employee(id):
+    data = request.json
+    name = data.get('name')
+    email = data.get('email')
+    auth_level = data.get('auth_level')
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    query = "UPDATE LogInfo SET UserNm = ?, UserEmail = ?, AuthLevel = ? WHERE UserId = ?"
+    cursor.execute(query, (name, email, auth_level, id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True})
 @app.route('/special_order_report')
 def special_order_reports():
     auth_level = session.get('auth_level')
