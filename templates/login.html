@@ -79,7 +79,7 @@
               <!-- Log in form -->
               <h2>Returning User Log in</h2>
               <div>
-                <form action="/check_login" method="POST">
+                <form action="/check_login" method="POST" onsubmit="clearCart()">
                   <div class="form-group">
                     <label for="username">Username:</label>
                     <input type="text" id="username" name="username" required />
@@ -223,6 +223,10 @@
           saveRegistration();
         });
 
+      function clearCart() {
+        localStorage.removeItem('cart');
+      }
+
       function saveRegistration() {
         const userName = document.getElementById("regusername").value;
         const userEmail = document.getElementById("regemail").value;
@@ -255,6 +259,7 @@
           .then((data) => {
             alert(data.message);
             console.log(data.updated_info);
+            clearCart();
             window.location.href = '/search';
           })
           .catch((error) => {
