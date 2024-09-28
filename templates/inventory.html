@@ -14,21 +14,24 @@
         font-family: Arial, sans-serif;
       }
       .banner {
-
         position: fixed;
         top: 0;
         width: 100%;
-        background-color: orange;
+        background-color: orange; /* Solid orange background */
         color: white;
         padding: 10px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         z-index: 1000;
-          font-size: 14px;
+        transition: transform 0.3s ease; /* Smooth transition */
+        font-size: 14px;
+      }
+      .banner.hidden {
+        transform: translateY(-100%); /* Move the banner out of view */
       }
       .nav-links {
-        display: none;
+        display: flex;
         gap: 20px;
         padding-right: 20px;
         margin-left: auto;
@@ -110,8 +113,8 @@
     </style>
   </head>
   <body>
-    <div class="banner">
-      <div class="toggle-button" onclick="toggleBanner()">☰</div>
+    <div class="toggle-button" onclick="toggleBanner()">☰</div>
+    <div class="banner" id="banner">
       <div class="nav-links">
         <a href="/login">Login/Logout</a>
         <a href="/search">Book Search</a>
@@ -132,6 +135,14 @@
 
     <script>
       const authLevel = "{{ auth_level }}"; // Pass the auth_level from Flask
+
+      // Function to toggle the banner visibility
+      function toggleBanner() {
+        const banner = document.getElementById("banner");
+        banner.classList.toggle("hidden");
+      }
+
+      // Function to set visibility of navigation links based on auth level
       function setNavLinksVisibility() {
         const inventoryLink = document.getElementById("inventoryLink");
         const reportsLink = document.getElementById("reportsLink");
@@ -148,6 +159,17 @@
 
       // Call the function to set visibility on page load
       setNavLinksVisibility();
+
+      // Function to attach event listeners to the sell buttons
+      function attachSellButtonListeners() {
+        const buttons = document.querySelectorAll(".sell-button");
+        buttons.forEach((button) => {
+          button.addEventListener("click", function () {
+            const bookId = this.dataset.bookid; // Assuming each button has a data-bookid attribute
+            addToCart(bookId);
+          });
+        });
+      }
 
       function fetchAllInventory() {
         fetch("/all_inventory")
