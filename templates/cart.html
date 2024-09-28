@@ -136,14 +136,19 @@
             background-color: #f2f2f2;
         }
         .toggle-button{
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            cursor: pointer;
+            z-index: 1001;
             color: black; /
             font-size: 24px;
         }
     </style>
 </head>
 <body>
-    <div class="banner">
-      <div class="toggle-button" onclick="toggleBanner()">☰</div>
+    <div class="toggle-button" onclick="toggleBanner()">☰</div>
+      <div class="banner" id="banner">
       <div class="nav-links">
         <a href="/login">Login/Logout</a>
         <a href="/search">Book Search</a>
