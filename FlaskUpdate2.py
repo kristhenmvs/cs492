@@ -7,6 +7,7 @@
 """
 
 from flask import Flask, request, render_template, render_template_string, redirect, session, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from flask_session import Session
 import webbrowser
@@ -23,6 +24,7 @@ from datetime import datetime
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
+app.secret_key = 'cs492team'
 app.config['SECRET_KEY'] = 'our_secret_code'
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
@@ -224,21 +226,21 @@ def check_login():
     conn = connect_db()
     cursor = conn.cursor()
     # Query to check if the provided username and password match
-    query = "SELECT * FROM LogInfo WHERE UserNm = ? AND PsWrd = ?"
-    cursor.execute(query, (username, password))
+    query = "SELECT * FROM LogInfo WHERE UserNm = ?"
+    cursor.execute(query, (username,))
     user = cursor.fetchone()
     # conn.close()
 
     logging.debug(f"User fetched from database: {user}")
 
-    if user:
+    if user and check_password_hash(user[1], password):
         session['username'] = username
         session['auth_level'] = user[4]
         logging.warning(f"Username: {user[0]}, Auth Level: {user[4]}")
         logging.warning(f"Username: {username}")
         if session.get('auth_level') == 'Customer':
-            query = "SELECT First_Name FROM CustomerInfo Inner Join LogInfo on CustomerInfo.Email_Add = LogInfo.UserEmail WHERE  LogInfo.UserNm = ? AND LogInfo.PsWrd = ?"
-            cursor.execute(query, (username, password))
+            query = "SELECT First_Name FROM CustomerInfo Inner Join LogInfo on CustomerInfo.Email_Add = LogInfo.UserEmail WHERE  LogInfo.UserNm = ?"
+            cursor.execute(query, (username,))
             user = cursor.fetchone()
             logging.warning(f"Username: {user[0]}")
 
@@ -416,18 +418,21 @@ def save_registration():
     userfirst = data['FirstName']
     userlast = data['LastName']
     today = datetime.today().strftime('%Y-%m-%d')  # Get today's date
+    hashed_password = generate_password_hash(userPassword)
 
     conn = connect_db()
     cursor = conn.cursor()
 
-    # Fetch the current max UserID
-    cursor.execute("SELECT COALESCE(MAX(UserID), 0) FROM LogInfo")
-    currentID = cursor.fetchone()[0]
-    # newUserID = currentID + 1
-    if userAuth in ('Supervisor' , 'Employee'):
+    if userAuth in ('Supervisor', 'Employee'):
         # Instert a Sup/Emp Entry
         insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
-        cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
+        cursor.execute(insert_query, (userName, hashed_password, userEmail, userAuth))
+        conn.commit()
+        conn.close()
+        session['username'] = userName
+        session['auth_level'] = userAuth
+
+        return jsonify({'message': 'Registration successful.', 'updated_info': {'username': userName, 'auth_level': userAuth}})
     else:
         # Check if email already exists in CustomerInfo
         cursor.execute("SELECT * FROM CustomerInfo WHERE Email_Add = ?", (userEmail,))
@@ -436,7 +441,7 @@ def save_registration():
         if existing_customer:
             # If the customer already exists, just insert into LogInfo
             insert_loginfo_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
-            cursor.execute(insert_loginfo_query, (userName, userPassword, userEmail, userAuth))
+            cursor.execute(insert_loginfo_query, (userName, hashed_password, userEmail, userAuth))
             conn.commit()
             conn.close()
 
@@ -449,7 +454,7 @@ def save_registration():
            
             # Insert Customer entry into LogInfo
             insert_query = "INSERT INTO LogInfo (UserNm, PsWrd, UserEmail, AuthLevel) VALUES (?, ?, ?, ?)"
-            cursor.execute(insert_query, (userName, userPassword, userEmail, userAuth))
+            cursor.execute(insert_query, (userName, hashed_password, userEmail, userAuth))
             conn.commit()
 
             # Insert Customer entry into CustomerInfo
@@ -796,6 +801,7 @@ def add_customer():
     # Return success message
     return jsonify({"success": True, "message": "Customer added successfully"})
 
+
 if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask_app)
     flask_thread.start()
@@ -824,6 +830,8 @@ if __name__ == '__main__':
         webbrowser.get('chrome').open_new_tab('http://127.0.0.1:5000/login')
     else:
         print("Chrome executable not found in common paths.")
+
+
 
 
 
