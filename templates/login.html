@@ -79,7 +79,11 @@
               <!-- Log in form -->
               <h2>Returning User Log in</h2>
               <div>
-                <form action="/check_login" method="POST" onsubmit="clearCart()">
+                <form
+                  action="/check_login"
+                  method="POST"
+                  onsubmit="clearCart()"
+                >
                   <div class="form-group">
                     <label for="username">Username:</label>
                     <input type="text" id="username" name="username" required />
@@ -111,7 +115,6 @@
                   <select id="authLevel" name="authLevel" required>
                     <option value="" disabled selected>Select an option</option>
                     <option value="Employee">an employee</option>
-                    <option value="Supervisor">a supervisor</option>
                     <option value="Customer">a customer</option>
                   </select>
                 </div>
@@ -201,6 +204,7 @@
             container2.style.display = "none";
           } else {
             registerFormContainer.style.display = "none";
+            container2.style.display = "block";
           }
         });
 
@@ -224,7 +228,7 @@
         });
 
       function clearCart() {
-        localStorage.removeItem('cart');
+        localStorage.removeItem("cart");
       }
 
       function saveRegistration() {
@@ -260,7 +264,7 @@
             alert(data.message);
             console.log(data.updated_info);
             clearCart();
-            window.location.href = '/search';
+            window.location.href = "/search";
           })
           .catch((error) => {
             alert(`Error: ${error.message}`);
